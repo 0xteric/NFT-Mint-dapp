@@ -1,4 +1,5 @@
 import Link from "next/link"
+import ConnectWallet from "./ConnectWallet"
 
 export default function Header() {
   return (
@@ -9,7 +10,9 @@ export default function Header() {
           <Link href="/">Home</Link>
           <Link href="/mint">Mint</Link>
         </nav>
-        <div className="flex-1 "></div>
+        <div className="flex-1 ">
+          <ConnectWallet />
+        </div>
       </div>
     </header>
   )
