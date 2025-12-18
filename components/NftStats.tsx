@@ -1,24 +1,11 @@
-"use client"
+import { useNftStats } from "@/components/Contract"
 
-import { useReadContract } from "wagmi"
-import { nftAbi } from "@/lib/abi"
-import { NFT_CONTRACT_ADDRESS } from "@/lib/constants"
-
-export default function NftStats() {
-  const { data: totalSupply } = useReadContract({
-    address: NFT_CONTRACT_ADDRESS,
-    abi: nftAbi,
-    functionName: "totalSupply",
-  })
-
-  const { data: maxSupply } = useReadContract({
-    address: NFT_CONTRACT_ADDRESS,
-    abi: nftAbi,
-    functionName: "maxSupply",
-  })
+export function NftStats() {
+  const { totalSupply, maxSupply, mintPrice } = useNftStats()
 
   return (
     <div className="text-sm text-gray-400">
+      <span>Price: {mintPrice ? Number(mintPrice) / 1e18 : "-"} ETH</span>
       <p>
         Supply: {totalSupply?.toString() ?? "-"} / {maxSupply?.toString() ?? "-"}
       </p>

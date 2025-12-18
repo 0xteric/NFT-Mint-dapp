@@ -20,4 +20,11 @@ export const nftAbi = [
     inputs: [],
     outputs: [{ type: "uint256" }],
   },
+  {
+    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
+    name: "mint",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
 ] as const

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAccount, useConnect, useDisconnect, useChainId, useSwitchChain } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi"
 import { sepolia } from "viem/chains"
 import { injected } from "wagmi/connectors"
 
@@ -12,11 +12,10 @@ export default function ConnectWallet() {
     setMounted(true)
   }, [])
 
-  const { address, isConnected } = useAccount()
+  const { address, isConnected, chainId } = useAccount()
   const { connect } = useConnect()
   const { disconnect } = useDisconnect()
 
-  const chainId = useChainId()
   const { switchChain } = useSwitchChain()
 
   if (!mounted) {
