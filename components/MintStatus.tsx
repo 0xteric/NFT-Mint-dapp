@@ -1,6 +1,6 @@
 type MintStatusProps = {
-  status: "idle" | "loading" | "success" | "error";
-};
+  status: "idle" | "waiting" | "loading" | "success" | "error"
+}
 
 export default function MintStatus({ status }: MintStatusProps) {
   return (
@@ -9,5 +9,5 @@ export default function MintStatus({ status }: MintStatusProps) {
         Status: <strong>{status}</strong>
       </p>
     </div>
-  );
+  )
 }

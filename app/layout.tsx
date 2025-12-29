@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
 import Header from "@/components/Header"
+import { ThemeProvider } from "next-themes"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,22 +16,28 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "NFT mint dapp",
+  title: "SUP!",
   description: "Created by Fractalio",
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Providers>
-          <Header />
-          <main className="p-4 max-w-4xl mx-auto">{children}</main>
-        </Providers>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <div
+            className="
+              min-h-screen
+              transition-colors duration-300
+            "
+          >
+            <Providers>
+              <Header />
+              <main className="p-4 max-w-4xl mx-auto ">{children}</main>
+              <footer className="p-2 text-xs  text-center">Built with Next.js, Wagmi, Viem & Foundry</footer>
+            </Providers>
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   )

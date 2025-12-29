@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi"
+import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from "wagmi"
 import { sepolia } from "viem/chains"
 import { injected } from "wagmi/connectors"
 
@@ -15,7 +15,12 @@ export default function ConnectWallet() {
   const { address, isConnected, chainId } = useAccount()
   const { connect } = useConnect()
   const { disconnect } = useDisconnect()
-
+  const { data: balance, refetch: refetchBalance } = useBalance({
+    address,
+    query: {
+      enabled: !!address,
+    },
+  })
   const { switchChain } = useSwitchChain()
 
   if (!mounted) {
@@ -24,7 +29,7 @@ export default function ConnectWallet() {
 
   if (isConnected && chainId !== sepolia.id) {
     return (
-      <button onClick={() => switchChain({ chainId: sepolia.id })} className="px-3 py-1 border rounded">
+      <button onClick={() => switchChain({ chainId: sepolia.id })} className="px-3 py-1 rounded">
         Switch to sepolia
       </button>
     )
@@ -32,20 +37,22 @@ export default function ConnectWallet() {
 
   if (isConnected) {
     return (
-      <div className="flex items-center gap-4">
-        <span className="text-sm">
+      <div className="flex items-center gap-4 border rounded border-(--accent) relative">
+        <div className="absolute bg-(--accent) opacity-25 w-full h-full z-0"></div>
+        {balance?.value && <span className="pl-2 z-10">{(Number(balance?.value) / 1e18).toFixed(3)} ETH</span>}
+        <span className="z-10">
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
-        <button onClick={() => disconnect()} className="px-3 py-1 border rounded">
-          Disconnect
+        <button onClick={() => disconnect()} className="px-3 py-1 rounded-r z-10">
+          DISCONNECT
         </button>
       </div>
     )
   }
 
   return (
-    <button onClick={() => connect({ connector: injected() })} className="px-4 py-2 border rounded">
-      Connect Wallet
+    <button onClick={() => connect({ connector: injected() })} className="px-3 py-1 rounded">
+      CONNECT WALLET
     </button>
   )
 }
