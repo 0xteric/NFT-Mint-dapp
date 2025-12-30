@@ -94,7 +94,6 @@ https://github.com/0xteric/SUP-NFT/blob/main/src/SupNFT.sol
 
 * Node.js 18+
 * Foundry
-* MetaMask
 
 ### Install dependencies
 
