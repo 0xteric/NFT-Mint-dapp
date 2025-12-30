@@ -1,4 +1,3 @@
-// Theme toggle sin next-themes
 "use client"
 import { useState, useEffect } from "react"
 import { FaSun, FaMoon } from "react-icons/fa"
