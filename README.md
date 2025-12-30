@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Presale Smart Contract
 
-## Getting Started
+This repository contains a secure Ethereum presale contract that allows users to purchase an ERC20 token in multiple phases using USDT, USDC, or ETH, and claim their tokens after the sale ends.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📜 Contract Overview
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The Presale smart contract enables users to:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Buy tokens in a multi-phase presale with configurable limits and prices.
+- Pay using USDT, USDC, or native ETH.
+- Claim purchased tokens after the presale ends.
+- Prevent participation of blacklisted addresses.
+- **Manage operations**: Allows the contract owner to manage phases, blacklist, and withdraw funds in emergencies.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## ⚙️ How It Works
 
-To learn more about Next.js, take a look at the following resources:
+### Buying with USDT / USDC
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Users can buy presale tokens by calling a function that accepts:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `_payingToken`: USDT or USDC contract address.
+- `_payingAmount`: Amount in USD to spend.
 
-## Deploy on Vercel
+**Requirements:**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Presale must be active.
+- Caller must not be blacklisted.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+### Buying with ETH
+
+Users can buy presale tokens using ETH:
+
+- ETH is converted to USD using a Chainlink ETH/USD price feed.
+- Token amount is calculated according to the current phase.
+
+**Requirements:**
+
+- Presale must be active.
+- Caller must not be blacklisted.
+
+---
+
+### Phases
+
+The presale consists of 3 phases. Each phase is defined by:
+
+- Tokens available
+- Price in USD
+- Expiration timestamp
+
+The contract automatically moves to the next phase when the current phase expires or its token limit is reached.
+
+---
+
+### Claiming Tokens
+
+After the presale ends, users can claim their purchased tokens:
+
+- Tokens are transferred to the caller.
+- The user's internal balance is reset.
+
+---
+
+### Blacklist Management
+
+The contract owner can manage the blacklist:
+
+- Add addresses to the blacklist
+- Remove addresses from the blacklist
+
+**Notes:**
+
+- Blacklisted addresses cannot participate in the presale.
+- Only the owner can modify the blacklist.
+
+---
+
+### Emergency Functions (Owner Only)
+
+The contract owner can recover funds in emergencies:
+
+- Recover ERC20 tokens from the contract
+- Recover native ETH from the contract
