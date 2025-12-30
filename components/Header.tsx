@@ -23,10 +23,10 @@ export default function Header() {
         </nav>
         <h1 className="text-xl font-bold justify-center flex flex-1 p-1.25">SUP!</h1>
         <div className="flex gap-4 items-center justify-end flex-1 ">
-          <div className="z-10">
+          <div>
             <ThemeToggle />
           </div>
-          <div className="flex z-10">
+          <div className="flex">
             <ConnectWallet />
           </div>
         </div>

@@ -128,7 +128,8 @@ export default function MintForm() {
       <AnimatePresence>
         {txHash && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="absolute bottom-[-50%]">
-            <div className=" flex flex-row gap-2 items-center  rounded card p-2">
+            <div className="absolute w-full h-full rounded bg-(--accent) opacity-20 -z-10"></div>
+            <div className=" flex flex-row gap-2 items-center  rounded p-2">
               {(status == "loading" || status === "waiting") && (
                 <svg className="w-4 h-4 animate-spin text-(--accent)" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />

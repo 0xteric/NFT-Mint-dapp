@@ -38,12 +38,12 @@ export default function ConnectWallet() {
   if (isConnected) {
     return (
       <div className="flex items-center gap-4 border rounded border-(--accent) relative">
-        <div className="absolute bg-(--accent) opacity-25 w-full h-full z-0"></div>
-        {balance?.value && <span className="pl-2 z-10">{(Number(balance?.value) / 1e18).toFixed(3)} ETH</span>}
-        <span className="z-10">
+        <div className="absolute bg-(--accent) opacity-25 w-full h-full -z-10"></div>
+        {balance?.value && <span className="pl-2">{(Number(balance?.value) / 1e18).toFixed(3)} ETH</span>}
+        <span>
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
-        <button onClick={() => disconnect()} className="px-3 py-1 rounded-r z-10">
+        <button onClick={() => disconnect()} className="px-3 py-1 rounded-r">
           DISCONNECT
         </button>
       </div>
