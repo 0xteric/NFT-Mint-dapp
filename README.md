@@ -29,6 +29,8 @@ The goal of this project is to demonstrate:
 
 ### Smart Contract
 
+https://github.com/0xteric/SUP-NFT/blob/main/src/SupNFT.sol
+
 * ERC‑721 NFT implementation using OpenZeppelin
 * Public mint with:
 
