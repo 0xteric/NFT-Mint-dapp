@@ -1,3 +1,4 @@
+"use client"
 import { useNftStats } from "@/components/Contract"
 
 export function NftStats() {
