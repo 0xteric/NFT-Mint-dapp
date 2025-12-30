@@ -1,89 +1,151 @@
-# Presale Smart Contract
+# SupNFT – Full‑stack Web3 NFT Mint DApp
 
-This repository contains a secure Ethereum presale contract that allows users to purchase an ERC20 token in multiple phases using USDT, USDC, or ETH, and claim their tokens after the sale ends.
+SupNFT is a full‑stack Web3 decentralized application built to demonstrate practical skills in modern Ethereum development. The project covers the complete NFT lifecycle: minting, burning with ETH refund, wallet connection, contract interaction, and on‑chain state synchronization.
 
----
-
-## 📜 Contract Overview
-
-The Presale smart contract enables users to:
-
-- Buy tokens in a multi-phase presale with configurable limits and prices.
-- Pay using USDT, USDC, or native ETH.
-- Claim purchased tokens after the presale ends.
-- Prevent participation of blacklisted addresses.
-- **Manage operations**: Allows the contract owner to manage phases, blacklist, and withdraw funds in emergencies.
+This repository is intended as a **technical showcase** for Web3 / Blockchain developer roles.
 
 ---
 
-## ⚙️ How It Works
+## 🚀 Live Demo
 
-### Buying with USDT / USDC
-
-Users can buy presale tokens by calling a function that accepts:
-
-- `_payingToken`: USDT or USDC contract address.
-- `_payingAmount`: Amount in USD to spend.
-
-**Requirements:**
-
-- Presale must be active.
-- Caller must not be blacklisted.
+* **Network:** Sepolia Testnet
+* **Contract:** ERC‑721 deployed and verified on Sepolia
+* **Wallet:** MetaMask / Injected wallets
 
 ---
 
-### Buying with ETH
+## 🧠 Project Purpose
 
-Users can buy presale tokens using ETH:
+The goal of this project is to demonstrate:
 
-- ETH is converted to USD using a Chainlink ETH/USD price feed.
-- Token amount is calculated according to the current phase.
-
-**Requirements:**
-
-- Presale must be active.
-- Caller must not be blacklisted.
+* Real‑world smart contract design decisions
+* Secure NFT mint & burn flows
+* Clean frontend–contract integration
+* Professional tooling used in production Web3 stacks
 
 ---
 
-### Phases
+## 🧩 Features
 
-The presale consists of 3 phases. Each phase is defined by:
+### Smart Contract
 
-- Tokens available
-- Price in USD
-- Expiration timestamp
+* ERC‑721 NFT implementation using OpenZeppelin
+* Public mint with:
 
-The contract automatically moves to the next phase when the current phase expires or its token limit is reached.
+  * Max supply
+  * Max mint per transaction
+  * Fixed mint price
+* Burn functionality with automatic ETH refund
+* Reentrancy protection
+* Events for minting and burning
 
----
+### Frontend
 
-### Claiming Tokens
+* Wallet connection (MetaMask)
+* Network detection & auto switch (Sepolia)
+* Mint UI with:
 
-After the presale ends, users can claim their purchased tokens:
-
-- Tokens are transferred to the caller.
-- The user's internal balance is reset.
-
----
-
-### Blacklist Management
-
-The contract owner can manage the blacklist:
-
-- Add addresses to the blacklist
-- Remove addresses from the blacklist
-
-**Notes:**
-
-- Blacklisted addresses cannot participate in the presale.
-- Only the owner can modify the blacklist.
+  * Validation
+  * Transaction lifecycle states (waiting signature → pending → success)
+  * Transaction hash & Etherscan link
+* Burn UI for owned NFTs
+* Live contract stats (price, total supply)
+* Automatic UI refresh after on‑chain actions
 
 ---
 
-### Emergency Functions (Owner Only)
+## 🛠️ Tech Stack
 
-The contract owner can recover funds in emergencies:
+### Smart Contracts
 
-- Recover ERC20 tokens from the contract
-- Recover native ETH from the contract
+* **Solidity** ^0.8.x
+* **OpenZeppelin** (ERC721, Ownable, ReentrancyGuard)
+* **Foundry** (forge, scripts, local testing)
+
+### Frontend
+
+* **Next.js 14+** (App Router)
+* **React**
+* **TypeScript**
+* **wagmi** + **viem**
+* **TanStack Query**
+* **Tailwind CSS**
+
+### Network
+
+* **Ethereum Sepolia Testnet**
+
+---
+
+## 🔐 Security Considerations
+
+* Reentrancy protection on ETH‑handling functions
+* Strict supply limits enforced on‑chain
+* ETH refund logic carefully ordered to avoid locked funds
+* No privileged minting (fair mint logic)
+
+---
+
+## ⚙️ Local Setup
+
+### Prerequisites
+
+* Node.js 18+
+* Foundry
+* MetaMask
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Run frontend
+
+```bash
+npm run dev
+```
+
+### Build contracts
+
+```bash
+forge build
+```
+
+---
+
+## 🧪 Deployment
+
+Contracts are deployed using Foundry scripts:
+
+```bash
+forge script script/SupNFT.s.sol:SupNFTScript \
+  --rpc-url https://ethereum-sepolia-rpc.publicnode.com \
+  --private-key $PK \
+  --broadcast
+```
+
+---
+
+## 📌 What This Project Demonstrates
+
+* Full NFT lifecycle management
+* Secure ETH flows in smart contracts
+* Frontend–contract synchronization
+* Modern Web3 developer tooling
+* Clean and readable code structure
+
+---
+
+## 👤 Author
+
+Built by **Fractalio**
+
+* GitHub: [https://github.com/your-username](https://github.com/your-username)
+* LinkedIn: [https://linkedin.com/in/your-profile](https://linkedin.com/in/your-profile)
+
+---
+
+## 📝 License
+
+MIT License
