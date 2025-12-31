@@ -27,7 +27,7 @@ export default function ThemeToggle() {
   }
 
   return (
-    <button onClick={toggleTheme} className="p-2 rounded border border-(--accent)">
+    <button onClick={toggleTheme} className="p-2 rounded border border-(--accent) w-full flex justify-center">
       {theme === "dark" ? <FaSun /> : <FaMoon />}
     </button>
   )

@@ -6,6 +6,7 @@ import { NFT_CONTRACT_ADDRESS } from "@/lib/constants"
 import { nftAbi } from "@/lib/abi"
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import ConnectWallet from "./ConnectWallet"
 
 export default function BurnCard() {
   const { address } = useAccount()
@@ -53,6 +54,8 @@ export default function BurnCard() {
   const handleBurn = async (tokenId: number) => {
     if (!walletClient) return
     setBurningId(tokenId)
+    setStatus("waiting")
+
     try {
       const tx = await burn(tokenId)
 
@@ -75,9 +78,17 @@ export default function BurnCard() {
         setTxHash(null)
       }, 3500)
       setTokenIds((prev) => prev.filter((id) => id !== tokenId))
-    } catch (err) {
-      console.error(err)
-      setStatus("error")
+    } catch (e: any) {
+      if (e?.shortMessage === "User rejected the request.") {
+        setStatus("idle")
+      } else {
+        console.error(e)
+        setStatus("error")
+        setTimeout(() => {
+          setStatus("idle")
+          setTxHash(null)
+        }, 3500)
+      }
     }
     setBurningId(null)
   }
@@ -86,7 +97,7 @@ export default function BurnCard() {
     <div className="card rounded p-4 flex flex-col gap-4 min-w-[250px] min-h-[150px]">
       <h2 className="text-lg font-bold">Your NFTs</h2>
 
-      {(!address && <p>Connect your wallet to burn NFTs</p>) ||
+      {(!address && <ConnectWallet textMsg="Connect " />) ||
         (loading && <p>Loading your NFTs...</p>) ||
         (tokenIds.length === 0 && (
           <div className=" rounded border border-(--accent) text-center flex items-center p-6 text-(--accent) opacity-70  w-fit aspect-square">
@@ -105,8 +116,11 @@ export default function BurnCard() {
                 className="aspect-square min-w-25"
               >
                 <button onClick={() => handleBurn(id)} disabled={burningId === id} className="relative w-full h-full  rounded hover:opacity-80 disabled:opacity-50">
-                  {burningId === id ? "Burning..." : "Burn"}
-                  <span className="absolute bottom-1 right-2 text-sm text-(--bg-secondary)!">{id}</span>
+                  {burningId === id ? (status === "waiting" ? "Sign..." : "Burning...") : "Burn"}
+                  <span className="absolute bottom-1 right-2 text-sm text-(--bg-secondary)!">
+                    <strong className=" opacity-50 text-sm ">id: </strong>
+                    {id}
+                  </span>
                 </button>
               </motion.div>
             </AnimatePresence>
@@ -122,9 +136,9 @@ export default function BurnCard() {
             transition={{ duration: 0.2 }}
             className="absolute justify-center flex w-full left-0 top-[-46px]"
           >
-            <div className="absolute w-full h-full rounded bg-(--accent) opacity-20 -z-10"></div>
+            <div className=" flex flex-row gap-2 items-center justify-center rounded relative  p-2">
+              <div className="absolute w-full h-full rounded bg-(--accent) opacity-20 -z-10"></div>
 
-            <div className=" flex flex-row gap-2 items-center w-fit rounded  p-2">
               {(status == "loading" || status === "waiting") && (
                 <svg className="w-4 h-4 animate-spin text-(--accent)" viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />

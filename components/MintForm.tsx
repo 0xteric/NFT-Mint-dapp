@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useReadContract, useBalance, useAccount } from "wagmi"
 import { NFT_CONTRACT_ADDRESS } from "@/lib/constants"
 import { nftAbi } from "@/lib/abi"
+import ConnectWallet from "./ConnectWallet"
 
 export default function MintForm() {
   const [amount, setAmount] = useState(1)
@@ -111,17 +112,19 @@ export default function MintForm() {
         Cost: <span className="">{(amount * Number(mintPrice)) / 1e18} ETH</span>{" "}
       </span>
 
-      <button
-        onClick={handleMint}
-        disabled={status === "loading" || !!error}
-        className="px-2 py-1 
+      {(address && (
+        <button
+          onClick={handleMint}
+          disabled={status === "loading" || !!error}
+          className="px-2 py-1 
    font-semibold
   hover:scale-105 transition
   shadow-lg shadow-[#6366f1]/30
   w-full rounded  "
-      >
-        {getBtnMsg()}
-      </button>
+        >
+          {getBtnMsg()}
+        </button>
+      )) || <ConnectWallet textMsg="Connect " />}
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
 

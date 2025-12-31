@@ -20,7 +20,7 @@ body.dark {
 
 /* Aplicar colores usando variables */
 body {
-  height: 100vh;
+  overflow-x: hidden;
   font-family: Arial, Helvetica, sans-serif;
   background-color: var(--bg);
   color: var(--text);

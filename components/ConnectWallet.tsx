@@ -4,8 +4,9 @@ import { useEffect, useState } from "react"
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useBalance } from "wagmi"
 import { sepolia } from "viem/chains"
 import { injected } from "wagmi/connectors"
+import { LuWallet } from "react-icons/lu"
 
-export default function ConnectWallet() {
+export default function ConnectWallet({ textMsg }: any) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -37,13 +38,13 @@ export default function ConnectWallet() {
 
   if (isConnected) {
     return (
-      <div className="flex items-center gap-4 border rounded border-(--accent) relative">
+      <div className="flex lg:flex-row flex-col items-center gap-4  lg:border rounded border-(--accent) relative">
         <div className="absolute bg-(--accent) opacity-25 w-full h-full -z-10"></div>
         {balance?.value && <span className="pl-2">{(Number(balance?.value) / 1e18).toFixed(3)} ETH</span>}
         <span>
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
-        <button onClick={() => disconnect()} className="px-3 py-1 rounded-r">
+        <button onClick={() => disconnect()} className="px-3 py-1 rounded lg:rounded-none">
           DISCONNECT
         </button>
       </div>
@@ -51,8 +52,11 @@ export default function ConnectWallet() {
   }
 
   return (
-    <button onClick={() => connect({ connector: injected() })} className="px-3 py-1 rounded">
-      CONNECT WALLET
+    <button onClick={() => connect({ connector: injected() })} className="px-3 py-1 rounded w-full text-center">
+      <span className="flex  w-full items-center gap-2  justify-center">
+        {textMsg}
+        <LuWallet />
+      </span>
     </button>
   )
 }

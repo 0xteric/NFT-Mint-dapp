@@ -23,18 +23,24 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased `}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <div
             className="
-              min-h-screen
+            min-h-screen w-full flex flex-col relative overflow-x-hidden
               transition-colors duration-300
             "
           >
             <Providers>
               <Header />
-              <main className="p-4 max-w-4xl mx-auto ">{children}</main>
-              <footer className="p-2 text-xs  text-center">Built with Next.js, Wagmi, Viem & Foundry</footer>
+              <main
+                className=" mx-auto
+                 p-5            flex flex-col
+               items-center justify-center"
+              >
+                {children}
+              </main>
+              <footer className="p-2 text-xs mt-auto text-center">Built with Next.js, Wagmi, Viem & Foundry</footer>
             </Providers>
           </div>
         </ThemeProvider>
