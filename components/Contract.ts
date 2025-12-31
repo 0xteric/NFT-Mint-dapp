@@ -1,8 +1,8 @@
 "use client"
 
-import { useReadContract, useWriteContract, usePublicClient, useBalance } from "wagmi"
-import { nftAbi } from "@/lib/abi"
-import { NFT_CONTRACT_ADDRESS } from "@/lib/constants"
+import { useReadContract, useWriteContract, usePublicClient } from "wagmi"
+import { nftAbi, marketplaceAbi } from "@/lib/abi"
+import { NFT_CONTRACT_ADDRESS, MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
 
 export function useNftStats() {
   const { data: totalSupply } = useReadContract({
@@ -66,4 +66,187 @@ export function useBurn() {
   }
 
   return { burn }
+}
+
+///// MARKETPLACE //////
+
+// ----------- READ HOOKS ------------
+
+export function useMarketplaceInfo() {
+  const { data: marketplaceFee } = useReadContract({
+    address: MARKETPLACE_CONTRACT_ADDRESS,
+    abi: marketplaceAbi,
+    functionName: "marketplaceFee",
+  })
+
+  const { data: feeReceiver } = useReadContract({
+    address: MARKETPLACE_CONTRACT_ADDRESS,
+    abi: marketplaceAbi,
+    functionName: "feeReceiver",
+  })
+
+  return { marketplaceFee, feeReceiver }
+}
+
+export function useListing(tokenId: number) {
+  const collection = NFT_CONTRACT_ADDRESS
+  const { data: listing } = useReadContract({
+    address: MARKETPLACE_CONTRACT_ADDRESS,
+    abi: marketplaceAbi,
+    functionName: "listings",
+    args: [collection, BigInt(tokenId)],
+  })
+
+  return { listing }
+}
+
+// ----------- WRITE HOOKS ------------
+
+export function useList() {
+  const { writeContractAsync } = useWriteContract()
+  const publicClient = usePublicClient()
+
+  const list = async (tokenId: number, price: bigint) => {
+    const collection = NFT_CONTRACT_ADDRESS
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "list",
+      args: [collection, BigInt(tokenId), price],
+    })
+    return txHash
+  }
+
+  return { list, publicClient }
+}
+
+export function useCancelList() {
+  const { writeContractAsync } = useWriteContract()
+
+  const cancelList = async (collection: string, tokenId: number) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "cancelList",
+      args: [collection, BigInt(tokenId)],
+    })
+    return txHash
+  }
+
+  return { cancelList }
+}
+
+export function useBuy() {
+  const { writeContractAsync } = useWriteContract()
+
+  const buy = async (collection: string, tokenId: number, value: bigint) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "buy",
+      args: [collection, BigInt(tokenId)],
+      value,
+    })
+    return txHash
+  }
+
+  return { buy }
+}
+
+export function useBidToken() {
+  const { writeContractAsync } = useWriteContract()
+
+  const bidToken = async (collection: string, tokenId: number, price: bigint) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "bidToken",
+      args: [collection, BigInt(tokenId), price],
+      value: price,
+    })
+    return txHash
+  }
+
+  return { bidToken }
+}
+
+export function useCancelTokenBid() {
+  const { writeContractAsync } = useWriteContract()
+
+  const cancelTokenBid = async (collection: string, tokenId: number) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "cancelTokenBid",
+      args: [collection, BigInt(tokenId)],
+    })
+    return txHash
+  }
+
+  return { cancelTokenBid }
+}
+
+export function useAcceptTokenBid() {
+  const { writeContractAsync } = useWriteContract()
+
+  const acceptTokenBid = async (collection: string, bidder: string, tokenId: number) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "acceptTokenBid",
+      args: [collection, bidder, BigInt(tokenId)],
+    })
+    return txHash
+  }
+
+  return { acceptTokenBid }
+}
+
+export function useBidCollection() {
+  const { writeContractAsync } = useWriteContract()
+
+  const bidCollection = async (collection: string, price: bigint, quantity: number) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "bidCollection",
+      args: [collection, price, BigInt(quantity)],
+      value: price * BigInt(quantity),
+    })
+    return txHash
+  }
+
+  return { bidCollection }
+}
+
+export function useCancelCollectionBid() {
+  const { writeContractAsync } = useWriteContract()
+
+  const cancelCollectionBid = async (collection: string) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "cancelCollectionBid",
+      args: [collection],
+    })
+    return txHash
+  }
+
+  return { cancelCollectionBid }
+}
+
+export function useAcceptCollectionBid() {
+  const { writeContractAsync } = useWriteContract()
+
+  const acceptCollectionBid = async (collection: string, bidder: string, tokenIds: number[]) => {
+    const txHash = await writeContractAsync({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      abi: marketplaceAbi,
+      functionName: "acceptCollectionBid",
+      args: [collection, bidder, tokenIds.map((id) => BigInt(id))],
+    })
+    return txHash
+  }
+
+  return { acceptCollectionBid }
 }

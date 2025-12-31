@@ -38,13 +38,13 @@ export default function ConnectWallet({ textMsg }: any) {
 
   if (isConnected) {
     return (
-      <div className="flex lg:flex-row flex-col items-center gap-4  lg:border rounded border-(--accent) relative">
-        <div className="absolute bg-(--accent) opacity-25 w-full h-full -z-10"></div>
-        {balance?.value && (Number(balance?.value) / 1e18).toFixed(3)} ETH
+      <div className="flex  lg:flex-row flex-col items-center gap-4  lg:border rounded border-(--accent) relative">
+        <div className="absolute left-0 bg-(--accent) opacity-25 w-full h-full -z-10"></div>
+        <span className="px-2 h-full flex items-center lg:border-r border-(--accent)/30">{balance?.value && (Number(balance?.value) / 1e18).toFixed(3)} ETH</span>
         <span>
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
-        <button onClick={() => disconnect()} className="px-3 py-1 rounded lg:rounded-none">
+        <button onClick={() => disconnect()} className="px-3 py-1 h-full rounded lg:rounded-none">
           DISCONNECT
         </button>
       </div>
