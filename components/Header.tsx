@@ -49,7 +49,7 @@ export default function Header() {
             {menuCard && (
               <motion.div initial={{ opacity: 0, x: -100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.2 }} className="z-60">
                 <div className="px-2 -mt-4">
-                  <div className="card rounded border border-(--bg) mt-2 transition-all duration-300 ">
+                  <div className="card rounded border border-(--bg) mt-2 transition-all duration-300 min-w-[100px]">
                     <nav className="flex gap-4 flex-col text-sm p-2 text-center ">
                       <Link href="/" className={linkClass("/")}>
                         HOME
