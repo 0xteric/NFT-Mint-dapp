@@ -40,7 +40,7 @@ export default function ConnectWallet({ textMsg }: any) {
     return (
       <div className="flex lg:flex-row flex-col items-center gap-4  lg:border rounded border-(--accent) relative">
         <div className="absolute bg-(--accent) opacity-25 w-full h-full -z-10"></div>
-        {balance?.value && <span className="pl-2">{(Number(balance?.value) / 1e18).toFixed(3)} ETH</span>}
+        {balance?.value && (Number(balance?.value) / 1e18).toFixed(3)} ETH
         <span>
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
