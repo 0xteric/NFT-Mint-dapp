@@ -36,12 +36,17 @@ export default function Header() {
 
         <div className="fixed left-0 top-0 flex flex-col items-start z-50 ">
           {menuCard && <div id="menu-bg" onClick={closeMenuCard} className="absolute w-screen h-screen bg-[#0000007a] z-55"></div>}
-          <div className="p-2 z-60">
+          <div className="p-2 mb-2 z-60">
             <button onClick={switchMenuCard} className=" bg-transparent!">
-              <div className={"flex flex-col justify-center items-center gap-1.5 p-2 transition-all duration-200"}>
-                <div className={"  transition-all duration-300 px-3.5   bg-(--text) " + (menuCard ? " translate-y-1 rotate-45 py-0.25" : "py-0.5")}></div>
-                <div className={"  transition-all duration-300 px-3.5   bg-(--text) " + (menuCard ? " -translate-y-1 -rotate-45 py-0.25" : "py-0.5")}></div>
-                <div className={"  transition-all duration-300 px-3.5 py-0.5  bg-(--text) " + (menuCard ? "opacity-0 " : "")}></div>
+              <div
+                className={
+                  "flex flex-col justify-center items-center gap-1.5 p-2 transition-all duration-300 " +
+                  (menuCard ? "rotate-90  aspect-square bg-(--accent) rounded border border-(--bg-secondary)" : " ")
+                }
+              >
+                <div className={"  transition-all duration-300 px-3.5 py-0.5  " + (menuCard ? " translate-y-2.5 rotate-45 bg-[white] " : "bg-(--text) ")}></div>
+                <div className={"  transition-all duration-300 px-3.5 py-0.5  " + (menuCard ? " translate-y-0 -rotate-45 bg-[white] " : "bg-(--text)")}></div>
+                <div className={"  transition-all duration-300 px-3.5 py-0.5   " + (menuCard ? "scale-0 " : "bg-(--text)")}></div>
               </div>
             </button>
           </div>

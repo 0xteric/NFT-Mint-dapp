@@ -32,6 +32,7 @@ export default function MintForm() {
   })
 
   useEffect(() => {
+    console.log(publicClient)
     if (amount < 1 || amount > 5) {
       setError("Mint amount must be > 0 & < 6")
     } else {

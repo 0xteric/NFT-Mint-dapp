@@ -22,7 +22,7 @@ export default function MintPage() {
     setActiveCard(activeCard === "mint" ? "burn" : "mint")
   }
   return (
-    <div className="flex justify-center min-h-120 w-full items-center relative card">
+    <div className="flex justify-center min-h-120 w-min items-center relative card">
       <AnimatePresence>
         {mounted && activeCard === "mint" && (
           <motion.div

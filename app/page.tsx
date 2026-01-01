@@ -3,11 +3,13 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
 import ListedNFTS from "@/components/ListedNFTS"
-import ListNft from "@/components/ListNFT"
+import ListNftWithApproval from "@/components/ListNFT"
+import { FaUser } from "react-icons/fa"
+import { FaShop } from "react-icons/fa6"
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
-
+  const [pageCard, setPageCard] = useState("marketplace")
   useEffect(() => {
     setMounted(true)
   })
@@ -36,7 +38,7 @@ export default function Home() {
             className="flex flex-col gap-2 justify-center items-center"
           >
             <div
-              className="px-8 py-4 rounded  card
+              className="px-8 py-4 rounded  card 
  
   "
             >
@@ -61,8 +63,34 @@ export default function Home() {
         )}
       </AnimatePresence>
       <section className="w-full mt-5 relative p-10">
-        <div className="card rounded p-2 w-full">
-          <ListedNFTS />
+        <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full">
+          <div className="border-b border-(--accent)/30!">
+            <div className="flex">
+              <button
+                onClick={() => setPageCard("marketplace")}
+                className={"flex gap-2 items-center p-4 bg-transparent! text-(--accent)! " + (pageCard == "marketplace" ? "opacity-50 hover:opacity-50!" : "")}
+              >
+                <FaShop />
+                <span>Marketplace</span>
+              </button>
+              <button onClick={() => setPageCard("user")} className={"flex gap-2 items-center p-4 bg-transparent! text-(--accent)! " + (pageCard == "user" ? "opacity-50 hover:opacity-50!" : "")}>
+                <FaUser />
+                <span>Items</span>
+              </button>
+            </div>
+          </div>
+          <div className="p-4 bg-(--accent)/20">
+            {pageCard == "marketplace" && (
+              <div>
+                <ListedNFTS />
+              </div>
+            )}
+            {pageCard == "user" && (
+              <div>
+                <ListNftWithApproval />
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>

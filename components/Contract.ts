@@ -138,13 +138,14 @@ export function useCancelList() {
 
 export function useBuy() {
   const { writeContractAsync } = useWriteContract()
+  const collection = NFT_CONTRACT_ADDRESS
 
-  const buy = async (collection: string, tokenId: number, value: bigint) => {
+  const buy = async (tokenId: bigint, value: bigint) => {
     const txHash = await writeContractAsync({
       address: MARKETPLACE_CONTRACT_ADDRESS,
       abi: marketplaceAbi,
       functionName: "buy",
-      args: [collection, BigInt(tokenId)],
+      args: [collection, tokenId],
       value,
     })
     return txHash

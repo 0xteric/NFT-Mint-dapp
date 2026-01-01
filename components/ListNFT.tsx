@@ -45,7 +45,6 @@ export default function ListNftWithApproval() {
     loadTokens()
   }, [address, publicClient])
 
-  // 🔍 Check approval
   const { data: isApproved, refetch } = useReadContract({
     address: collection || undefined,
     abi: erc721Abi,
@@ -56,10 +55,9 @@ export default function ListNftWithApproval() {
     },
   })
 
-  // 🟢 Approve collection
   const approveCollection = async () => {
     if (!collection) return
-    setLoading(true)
+    setStatus("waiting")
     try {
       const hash = await writeContractAsync({
         address: collection,
@@ -67,72 +65,238 @@ export default function ListNftWithApproval() {
         functionName: "setApprovalForAll",
         args: [MARKETPLACE_CONTRACT_ADDRESS, true],
       })
+
       setTxHash(hash)
+
+      setStatus("loading")
+      const TxReceipt = await publicClient?.waitForTransactionReceipt({
+        hash,
+      })
+
+      setStatus("success")
+
+      setTimeout(() => {
+        setStatus("idle")
+        setTxHash(null)
+      }, 3500)
       await refetch()
-    } finally {
-      setLoading(false)
+    } catch (e) {
+      setStatus("error")
+      setTimeout(() => {
+        setStatus("idle")
+        setTxHash(null)
+      }, 3500)
     }
   }
 
-  // 🟣 List NFT
-  const handleList = async () => {
+  const handleList = async (e: any) => {
     if (!collection || tokenId === "" || Number(price) <= 0) return
-    setLoading(true)
+    if (e.target.id == "input-price") return
+    setStatus("waiting")
     try {
       const hash = await list(tokenId as number, parseEther(String(price)))
+      setStatus("loading")
       setTxHash(hash)
-    } finally {
-      setLoading(false)
+
+      const TxReceipt = await publicClient?.waitForTransactionReceipt({
+        hash,
+      })
+
+      setStatus("success")
+      setTimeout(() => {
+        setStatus("idle")
+        setTxHash(null)
+      }, 3500)
+    } catch (e) {
+      setStatus("error")
+      setTimeout(() => {
+        setStatus("idle")
+        setTxHash(null)
+      }, 3500)
+    }
+  }
+
+  const handleBgClick = (e: any) => {
+    if (e.target.id != "list-btn") {
+      setTokenId("")
     }
   }
 
   return (
-    <div className="max-w-md mx-auto p-4   space-y-4">
-      <h2 className="text-lg font-bold">Listar NFT</h2>
-
+    <div className=" mx-auto p-4   space-y-4">
       {tokenIds.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
           {tokenIds.map((id, index) => (
             <AnimatePresence key={id}>
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
+                initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+                exit={{ opacity: 0, scale: 0.5 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 className="aspect-square min-w-25"
               >
                 <button
-                  onClick={() => {
-                    if (tokenId == id) {
-                      if (!isApproved) {
-                        approveCollection()
-                      } else {
-                        handleList()
-                      }
+                  onClick={(e) => {
+                    if (!isApproved) {
+                      approveCollection()
                     } else {
-                      return setTokenId(id)
+                      if (tokenId == id) {
+                        handleList(e)
+                      } else {
+                        return setTokenId(id)
+                      }
                     }
                   }}
                   className="relative w-full h-full transition-all duration-300  rounded hover:opacity-80 disabled:opacity-50 overflow-hidden"
                 >
-                  <span className={"absolute transition-all duration-300 " + (tokenId == id ? "-translate-y-20.5 -translate-x-20.5" : "-translate-y-4.5 -translate-x-2.5")}>
-                    {isApproved ? "List" : "Approve"}
-                  </span>
-                  {tokenId == id && (
+                  <div className={"absolute transition-all duration-300 " + (tokenId == id && !isApproved ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")}>
+                    <AnimatePresence mode="wait">
+                      {tokenId == id &&
+                        !isApproved &&
+                        ((status == "idle" && (
+                          <motion.div
+                            key={id}
+                            className="  flex justify-center text-center w-full"
+                            initial={{ opacity: 0, translateY: 100 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            exit={{ opacity: 0, translateY: 100 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className="flex gap-2 items-center justify-center">
+                              <span>Approve</span>
+                            </div>
+                          </motion.div>
+                        )) ||
+                          (status == "waiting" && (
+                            <motion.div
+                              key={id}
+                              className="  flex justify-center text-center w-full"
+                              initial={{ opacity: 0, translateY: 100 }}
+                              animate={{ opacity: 1, translateY: 0 }}
+                              exit={{ opacity: 0, translateY: 100 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="flex gap-2 items-center justify-center">
+                                <span>Sign...</span>
+                              </div>
+                            </motion.div>
+                          )) ||
+                          (status == "loading" && (
+                            <motion.div
+                              key={id}
+                              className="flex justify-center text-center w-full"
+                              initial={{ opacity: 0, translateY: 100 }}
+                              animate={{ opacity: 1, translateY: 0 }}
+                              exit={{ opacity: 0, translateY: 100 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="flex gap-2 items-center justify-center">
+                                <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
+                                </svg>
+                                <span>Approving...</span>
+                              </div>
+                            </motion.div>
+                          )) ||
+                          (status == "success" && (
+                            <motion.div
+                              key={id}
+                              className="flex justify-center text-center w-full"
+                              initial={{ opacity: 0, translateY: 100 }}
+                              animate={{ opacity: 1, translateY: 0 }}
+                              exit={{ opacity: 0, translateY: 100 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <svg className="w-10 h-10 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M9 12l2 2 4-4" />
+                              </svg>
+                            </motion.div>
+                          )) ||
+                          (status == "error" && (
+                            <motion.div
+                              key={id}
+                              className="flex justify-center text-center w-full"
+                              initial={{ opacity: 0, translateY: 100 }}
+                              animate={{ opacity: 1, translateY: 0 }}
+                              exit={{ opacity: 0, translateY: 100 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <svg className="w-10 h-10 text-red-500" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" className="opacity-75" />
+
+                                <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-75" />
+                              </svg>
+                            </motion.div>
+                          )))}
+                    </AnimatePresence>
+                  </div>
+                  {isApproved && (
+                    <AnimatePresence mode="wait">
+                      {tokenId == id && (
+                        <motion.div
+                          className="absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full"
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className="p-2 h-min flex justify-center  w-full  relative">
+                            <div className="flex justify-center gap-1 px-2 overflow-visible">
+                              <input
+                                id="input-price"
+                                type="number"
+                                className=" bg-transparent! rounded text-center w-8 overflow-visible"
+                                placeholder="0.0"
+                                autoFocus
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                              />
+                              <span>ETH</span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
+                  {isApproved && (
+                    <div className={"absolute transition-all duration-300 " + (tokenId == id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")}>
+                      <AnimatePresence>
+                        {(status == "idle" || tokenId != id) && (
+                          <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                            <span>List</span>
+                          </motion.div>
+                        )}
+                        {tokenId == id &&
+                          ((status == "waiting" && (
+                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                              <span>Sign...</span>
+                            </motion.div>
+                          )) ||
+                            (status == "loading" && (
+                              <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                                <span>Listing...</span>
+                              </motion.div>
+                            )))}
+                      </AnimatePresence>
+                    </div>
+                  )}
+
+                  {tokenId == id && txHash && (
                     <AnimatePresence>
                       <motion.div
-                        className="absolute  top-[37%] w-full"
+                        className="top-35 absolute  flex justify-center text-center w-full"
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        transition={{ duration: 0.3 }}
                       >
-                        <div className="p-2 h-min flex justify-center  w-full  relative">
-                          <div className="flex justify-center gap-1">
-                            <input id="input-price" type="number" className=" bg-transparent! w-6 rounded" placeholder="0.0" autoFocus value={price} onChange={(e) => setPrice(e.target.value)} />
-                            <span>ETH</span>
-                          </div>
-                        </div>
+                        <a target="_blank" href={`https://sepolia.etherscan.io/tx/${txHash}`} className=" hover:opacity-80">
+                          <span>Tx: </span>
+                          <span>
+                            {txHash?.slice(0, 6)}...{txHash?.slice(-4)}
+                          </span>
+                        </a>
                       </motion.div>
                     </AnimatePresence>
                   )}

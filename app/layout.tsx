@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Providers>
               <Header />
               <main
-                className=" mx-auto
+                className=" 
                  p-5            flex flex-col
                items-center justify-center"
               >
