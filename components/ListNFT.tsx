@@ -5,7 +5,7 @@ import { Address, parseEther, erc721Abi } from "viem"
 import { useAccount, useReadContract, useWriteContract } from "wagmi"
 import { nftAbi } from "@/lib/abi"
 import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS } from "@/lib/constants"
-import { useList } from "./Contract"
+import { useList, useCancelList } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
 import { FaLink } from "react-icons/fa"
@@ -17,9 +17,10 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   const { address } = useAccount()
   const { writeContractAsync } = useWriteContract()
   const { list, publicClient } = useList()
+  const { cancelList } = useCancelList()
 
   const [collection, setCollection] = useState<Address | "">(NFT_CONTRACT_ADDRESS)
-  const [localUserListings, setUserListings] = useState<ListedNft[]>([])
+  const [localUserListings, setLocalUserListings] = useState<ListedNft[]>([])
   const [tokenId, setTokenId] = useState<bigint | "">("")
   const [price, setPrice] = useState<number | string>("")
   const [txHash, setTxHash] = useState<string | null>(null)
@@ -27,16 +28,16 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   const [items, setUserItems] = useState<UserNft[]>([])
 
   useEffect(() => {
-    setUserListings(userListings)
-  }, [])
+    setLocalUserListings(userListings)
+  }, [userListings])
 
   useEffect(() => {
+    if (!address) return
     loadTokens()
-  }, [localUserListings])
+  }, [address, localUserListings])
 
   const loadTokens = async () => {
     if (!address) return
-
     try {
       const tokens: any = await publicClient?.readContract({
         address: NFT_CONTRACT_ADDRESS,
@@ -47,17 +48,19 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
       tokens.sort((a: any, b: any) => Number(a) - Number(b))
 
       const _items: UserNft[] = tokens.map((t: bigint) => {
-        return { id: t, price: 0, listed: false, txHash: "", txStatus: "" }
+        return { id: t, price: BigInt(0), listed: false, txHash: null, txStatus: "idle" }
       })
       if (localUserListings.length > 0) {
-        console.log(localUserListings)
-        setUserItems(
-          _items.map((item: any) => ({
-            ...item,
-            listed: localUserListings.some((l) => l.tokenId == item.id),
-            price: localUserListings.find((l) => l.tokenId == item.id)?.price,
-          }))
-        )
+        const userItems = _items.map((item: any) => ({
+          ...item,
+          listed: localUserListings.some((l) => l.tokenId == item.id),
+          price: localUserListings.find((l) => l.tokenId == item.id)?.price,
+          txStatus: "idle",
+        }))
+        setUserItems(userItems)
+        console.log(userItems, localUserListings)
+      } else {
+        setUserItems(_items)
       }
     } catch (err) {
       console.error("Error cargando tokens:", err)
@@ -65,7 +68,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
     }
   }
 
-  const setTokenProp = <K extends keyof UserNft>(id: bigint, prop: K, value: UserNft[K]) => {
+  const setTokenProp = <K extends keyof UserNft>(id: bigint, prop: K, value: UserNft[K] | null) => {
     setUserItems((prev) => prev.map((item) => (item.id === id ? { ...item, [prop]: value } : item)))
   }
 
@@ -81,7 +84,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
 
   const approveCollection = async () => {
     if (!collection) return
-    setStatus("waiting")
+    setTokenProp(BigInt(tokenId), "txStatus", "waiting")
 
     try {
       const hash = await writeContractAsync({
@@ -91,25 +94,25 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
         args: [MARKETPLACE_CONTRACT_ADDRESS, true],
       })
 
-      setTxHash(hash)
+      setTokenProp(BigInt(tokenId), "txHash", hash)
 
-      setStatus("loading")
+      setTokenProp(BigInt(tokenId), "txStatus", "loading")
       const TxReceipt = await publicClient?.waitForTransactionReceipt({
         hash,
       })
 
-      setStatus("success")
+      setTokenProp(BigInt(tokenId), "txStatus", "success")
 
       setTimeout(async () => {
         await refetch()
-        setStatus("idle")
-        setTxHash(null)
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     } catch (e) {
-      setStatus("error")
+      setTokenProp(BigInt(tokenId), "txStatus", "error")
       setTimeout(() => {
-        setStatus("idle")
-        setTxHash(null)
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     }
   }
@@ -117,26 +120,53 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   const handleList = async (e: any) => {
     if (!collection || tokenId === "" || Number(price) <= 0) return
     if (e.target.id == "input-price") return
-    setStatus("waiting")
+    setTokenProp(BigInt(tokenId), "txStatus", "waiting")
     try {
       const hash = await list(Number(tokenId), parseEther(String(price)))
-      setStatus("loading")
-      setTxHash(hash)
+      setTokenProp(BigInt(tokenId), "txStatus", "loading")
+      setTokenProp(BigInt(tokenId), "txHash", hash)
 
       const TxReceipt = await publicClient?.waitForTransactionReceipt({
         hash,
       })
 
-      setStatus("success")
+      setTokenProp(BigInt(tokenId), "txStatus", "success")
       setTimeout(() => {
-        setStatus("idle")
-        setTxHash(null)
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     } catch (e) {
-      setStatus("error")
+      setTokenProp(BigInt(tokenId), "txStatus", "error")
       setTimeout(() => {
-        setStatus("idle")
-        setTxHash(null)
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
+      }, 3500)
+    }
+  }
+
+  const handleDelist = async (e: any) => {
+    if (!collection || tokenId === "") return
+    if (e.target.id == "input-price") return
+    setTokenProp(BigInt(tokenId), "txStatus", "waiting")
+    try {
+      const hash = await cancelList(collection, Number(tokenId))
+      setTokenProp(BigInt(tokenId), "txStatus", "loading")
+      setTokenProp(BigInt(tokenId), "txHash", hash)
+
+      const TxReceipt = await publicClient?.waitForTransactionReceipt({
+        hash,
+      })
+
+      setTokenProp(BigInt(tokenId), "txStatus", "success")
+      setTimeout(() => {
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
+      }, 3500)
+    } catch (e) {
+      setTokenProp(BigInt(tokenId), "txStatus", "error")
+      setTimeout(() => {
+        setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     }
   }
@@ -150,7 +180,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   }
 
   return (
-    <div onClick={() => handleBgClick(event)} className=" flex flex-col gap-2">
+    <div onClick={handleBgClick} className=" flex flex-col gap-2">
       {!address && (
         <div className="w-full flex justify-center">
           <div className="w-50">
@@ -161,7 +191,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
       {items.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
           {items.map((i, index) => (
-            <AnimatePresence key={i.id}>
+            <AnimatePresence key={i.id.toString()}>
               <motion.div
                 initial={{ opacity: 0, scale: 1 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -177,8 +207,11 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                       approveCollection()
                     } else {
                       if (tokenId == i.id) {
-                        console.log(e.target)
-                        handleList(e)
+                        if (i.listed) {
+                          handleDelist(e)
+                        } else {
+                          handleList(e)
+                        }
                       } else {
                         setPrice("")
                         return setTokenId(i.id)
@@ -244,7 +277,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                   </div>
                   {isApproved && !txHash && !i.listed && (
                     <AnimatePresence mode="wait">
-                      {tokenId == i.id && (
+                      {tokenId == i.id && (i.txStatus == "idle" || i.txStatus == "waiting") && (
                         <motion.div
                           className="absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full z-250"
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -271,7 +304,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                     </AnimatePresence>
                   )}
                   {isApproved && (
-                    <div className={"absolute transition-all duration-300 " + (tokenId == i.id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")}>
+                    <div className={"absolute transition-all duration-300 " + (tokenId == i.id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 lg:text-2xl")}>
                       <AnimatePresence>
                         {(i.txStatus == "idle" || tokenId != i.id || i.listed) && (
                           <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
@@ -279,12 +312,12 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                           </motion.div>
                         )}
                         {tokenId == i.id &&
-                          ((i.txStatus == "waiting" && (
+                          ((i.txStatus == "waiting" && !i.listed && (
                             <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                               <span>Sign...</span>
                             </motion.div>
                           )) ||
-                            (i.txStatus == "loading" && (
+                            (i.txStatus == "loading" && !i.listed && (
                               <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                                 <span>Listing...</span>
                               </motion.div>
@@ -295,22 +328,16 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                   {isApproved && i.listed && tokenId == i.id && (
                     <div className={"absolute transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"}>
                       <AnimatePresence>
-                        {(i.txStatus == "idle" || tokenId != i.id || i.listed) && (
+                        {((i.txStatus == "idle" && i.listed) || tokenId != i.id) && (
                           <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                             Delist
                           </motion.div>
                         )}
-                        {tokenId == i.id &&
-                          ((i.txStatus == "waiting" && (
-                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                              <span>Sign...</span>
-                            </motion.div>
-                          )) ||
-                            (i.txStatus == "loading" && (
-                              <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                                <span>Listing...</span>
-                              </motion.div>
-                            )))}
+                        {tokenId == i.id && i.txStatus == "waiting" && (
+                          <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                            <span>Sign...</span>
+                          </motion.div>
+                        )}
                       </AnimatePresence>
                     </div>
                   )}
