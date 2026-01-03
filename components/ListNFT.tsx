@@ -57,8 +57,10 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
           price: localUserListings.find((l) => l.tokenId == item.id)?.price,
           txStatus: "idle",
         }))
-        setUserItems(userItems)
-        console.log(userItems, localUserListings)
+        setTimeout(() => {
+          setUserItems(userItems)
+          console.log(userItems, localUserListings)
+        }, 100)
       } else {
         setUserItems(_items)
       }
@@ -122,7 +124,8 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
     if (e.target.id == "input-price") return
     setTokenProp(BigInt(tokenId), "txStatus", "waiting")
     try {
-      const hash = await list(Number(tokenId), parseEther(String(price)))
+      const _price = parseEther(String(price))
+      const hash = await list(Number(tokenId), _price)
       setTokenProp(BigInt(tokenId), "txStatus", "loading")
       setTokenProp(BigInt(tokenId), "txHash", hash)
 
@@ -133,6 +136,8 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
       setTokenProp(BigInt(tokenId), "txStatus", "success")
       setTimeout(() => {
         setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "listed", true)
+        setTokenProp(BigInt(tokenId), "price", _price)
         setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     } catch (e) {
@@ -160,6 +165,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
       setTokenProp(BigInt(tokenId), "txStatus", "success")
       setTimeout(() => {
         setTokenProp(BigInt(tokenId), "txStatus", "idle")
+        setTokenProp(BigInt(tokenId), "listed", false)
         setTokenProp(BigInt(tokenId), "txHash", null)
       }, 3500)
     } catch (e) {

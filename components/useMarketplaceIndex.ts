@@ -65,7 +65,6 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
 
         if (parsed.eventName === "ListingCancelled") {
           const listing = listings.get(id)
-          console.log(listing)
           if (listing) {
             listing.status = "CANCELLED"
             listing.updatedAtBlock = log.blockNumber
