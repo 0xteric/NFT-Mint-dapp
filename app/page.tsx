@@ -21,10 +21,7 @@ export default function Home() {
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="mt-10">
             <h2 className="text-xl font-semibold mb-4">Thanks for reaching my dApp</h2>
 
-            <p className="max-w-2xl">
-              This project was built as a production-like NFT minting dApp. Its goal is to showcase best practices in modern Web3 development: from smart contracts to UX around blockchain
-              transactions.
-            </p>
+            <p className="max-w-2xl">This project was built as a production-like NFT marketplace. Its goal is to showcase best practices in modern Web3 development.</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -37,22 +34,6 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="flex flex-col gap-2 justify-center items-center"
           >
-            <div
-              className="px-8 py-4 rounded  card 
- 
-  "
-            >
-              <ul className="list-disc text-left mt-4 space-y-1 mb-2 ">
-                <li>Smart contract development with Solidity (ERC-721).</li>
-                <li>Foundry for testing, scripting and deployment.</li>
-                <li>Frontend integration with Next.js (App Router).</li>
-                <li>Wallet connection using Wagmi and Viem.</li>
-                <li>Managing blockchain transaction states.</li>
-                <li>Web3 UX patterns: wallet state and network switching.</li>
-                <li>Clean separation between UI and blockchain logic.</li>
-                <li>Environment-based configuration.</li>
-              </ul>
-            </div>
             <Link href="/mint">
               <button className="py-2 px-4 rounded-4xl mt-3 w-fit flex gap-2 hover:opacity-85 ">
                 <span>Go to mint</span>
