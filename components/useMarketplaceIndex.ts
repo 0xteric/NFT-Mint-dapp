@@ -1,17 +1,44 @@
+"use client"
 import { MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
 import { decodeEventLog, parseAbiItem } from "viem"
 import { listingCreatedEventAbi, listingCancelledEventAbi, listingSoldEventAbi, bidSoldEventAbi } from "@/lib/constants"
 
 const marketplaceAbi = [parseAbiItem(listingCreatedEventAbi), parseAbiItem(listingCancelledEventAbi), parseAbiItem(listingSoldEventAbi), parseAbiItem(bidSoldEventAbi)]
 
-export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
+const CHUNK_SIZE = BigInt(1000)
+
+async function getLogs(publicClient: any, fromBlock: bigint) {
   const latest = await publicClient.getBlockNumber()
-  const logs = await publicClient.getLogs({
-    address: MARKETPLACE_CONTRACT_ADDRESS,
-    fromBlock,
-    toBlock: latest,
-  })
-  console.log(logs)
+  let allLogs: any[] = []
+
+  let currentFrom = fromBlock
+
+  while (currentFrom <= latest) {
+    let currentTo = currentFrom + CHUNK_SIZE
+
+    if (currentTo > latest) {
+      currentTo = latest
+    }
+
+    console.log("Reading blocks:", currentFrom.toString(), currentTo.toString())
+
+    const logs = await publicClient.getLogs({
+      address: MARKETPLACE_CONTRACT_ADDRESS,
+      fromBlock: currentFrom,
+      toBlock: currentTo,
+    })
+
+    allLogs.push(...logs)
+
+    currentFrom = currentTo + BigInt(1)
+  }
+
+  return allLogs
+}
+
+export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
+  const logs: any[] = await getLogs(publicClient, fromBlock)
+
   const listings = new Map<string, any>()
 
   for (const log of logs) {
@@ -23,8 +50,9 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
           data: log.data,
         })
 
-        const key = `${parsed.args.collection + parsed.args.tokenId}`
-        listings.set(key, {
+        const id = parsed.args.id.toString()
+
+        listings.set(id, {
           id: parsed.args.id,
           collection: parsed.args.collection,
           tokenId: parsed.args.tokenId,
@@ -34,7 +62,23 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
           createdAtBlock: log.blockNumber,
           updatedAtBlock: log.blockNumber,
         })
-      } catch (e) {}
+
+        if (parsed.eventName === "ListingCancelled") {
+          const listing = listings.get(id)
+          if (listing) {
+            listing.status = "CANCELLED"
+            listing.updatedAtBlock = log.blockNumber
+          }
+        }
+
+        if (parsed.eventName === "ListingSold") {
+          const listing = listings.get(id)
+          if (listing) {
+            listing.status = "SOLD"
+            listing.updatedAtBlock = log.blockNumber
+          }
+        }
+      } catch {}
     }
   }
 

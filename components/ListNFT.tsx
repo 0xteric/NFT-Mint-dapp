@@ -9,39 +9,65 @@ import { useList } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
 import { FaLink } from "react-icons/fa"
-export default function ListNftWithApproval() {
+import { FiCheckCircle } from "react-icons/fi"
+import { RxCrossCircled } from "react-icons/rx"
+import { ListedNFTSProps, ListedNft, UserNft } from "@/lib/constants"
+
+export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   const { address } = useAccount()
   const { writeContractAsync } = useWriteContract()
   const { list, publicClient } = useList()
 
   const [collection, setCollection] = useState<Address | "">(NFT_CONTRACT_ADDRESS)
-  const [tokenId, setTokenId] = useState<number | "">("")
+  const [localUserListings, setUserListings] = useState<ListedNft[]>([])
+  const [tokenId, setTokenId] = useState<bigint | "">("")
   const [price, setPrice] = useState<number | string>("")
   const [txHash, setTxHash] = useState<string | null>(null)
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("idle")
-  const [tokenIds, setTokenIds] = useState<number[]>([])
+  const [items, setUserItems] = useState<UserNft[]>([])
 
   useEffect(() => {
+    setUserListings(userListings)
+  }, [])
+
+  useEffect(() => {
+    loadTokens()
+  }, [localUserListings])
+
+  const loadTokens = async () => {
     if (!address) return
 
-    const loadTokens = async () => {
-      try {
-        const tokens: any = await publicClient?.readContract({
-          address: NFT_CONTRACT_ADDRESS,
-          abi: nftAbi,
-          functionName: "tokensOfOwner",
-          args: [address],
-        })
-        tokens.sort((a: any, b: any) => Number(a) - Number(b))
-        setTokenIds(tokens.map((t: any) => Number(t)))
-      } catch (err) {
-        console.error("Error cargando tokens:", err)
-        setTokenIds([])
-      }
-    }
+    try {
+      const tokens: any = await publicClient?.readContract({
+        address: NFT_CONTRACT_ADDRESS,
+        abi: nftAbi,
+        functionName: "tokensOfOwner",
+        args: [address],
+      })
+      tokens.sort((a: any, b: any) => Number(a) - Number(b))
 
-    loadTokens()
-  }, [address, publicClient])
+      const _items: UserNft[] = tokens.map((t: bigint) => {
+        return { id: t, price: 0, listed: false, txHash: "", txStatus: "" }
+      })
+      if (localUserListings.length > 0) {
+        console.log(localUserListings)
+        setUserItems(
+          _items.map((item: any) => ({
+            ...item,
+            listed: localUserListings.some((l) => l.tokenId == item.id),
+            price: localUserListings.find((l) => l.tokenId == item.id)?.price,
+          }))
+        )
+      }
+    } catch (err) {
+      console.error("Error cargando tokens:", err)
+      setUserItems([])
+    }
+  }
+
+  const setTokenProp = <K extends keyof UserNft>(id: bigint, prop: K, value: UserNft[K]) => {
+    setUserItems((prev) => prev.map((item) => (item.id === id ? { ...item, [prop]: value } : item)))
+  }
 
   const { data: isApproved, refetch } = useReadContract({
     address: collection || undefined,
@@ -93,7 +119,7 @@ export default function ListNftWithApproval() {
     if (e.target.id == "input-price") return
     setStatus("waiting")
     try {
-      const hash = await list(tokenId as number, parseEther(String(price)))
+      const hash = await list(Number(tokenId), parseEther(String(price)))
       setStatus("loading")
       setTxHash(hash)
 
@@ -124,7 +150,7 @@ export default function ListNftWithApproval() {
   }
 
   return (
-    <div onClick={() => handleBgClick(event)} className=" mx-auto p-4   space-y-4">
+    <div onClick={() => handleBgClick(event)} className=" flex flex-col gap-2">
       {!address && (
         <div className="w-full flex justify-center">
           <div className="w-50">
@@ -132,31 +158,30 @@ export default function ListNftWithApproval() {
           </div>
         </div>
       )}
-      {tokenIds.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {tokenIds.map((id, index) => (
-            <AnimatePresence key={id}>
+      {items.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
+          {items.map((i, index) => (
+            <AnimatePresence key={i.id}>
               <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
+                initial={{ opacity: 0, scale: 1 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                exit={{ opacity: 0, scale: 1 }}
+                transition={{ duration: 0.1, delay: index * 0.1 }}
                 className="aspect-square min-w-25 relative hover:scale-103 transition-all duration-300 overflow-hidden text-white"
               >
                 <button
                   id="list-btn"
                   onClick={(e) => {
                     if (!isApproved) {
-                      setTokenId(id)
+                      setTokenId(i.id)
                       approveCollection()
                     } else {
-                      if (tokenId == id) {
-                        if (status == "idle") {
-                          handleList(e)
-                        }
+                      if (tokenId == i.id) {
+                        console.log(e.target)
+                        handleList(e)
                       } else {
                         setPrice("")
-                        return setTokenId(id)
+                        return setTokenId(i.id)
                       }
                     }
                   }}
@@ -165,7 +190,7 @@ export default function ListNftWithApproval() {
                 <div className="bg-(--accent) relative w-full h-full transition-all duration-300  rounded  disabled:opacity-50 overflow-hidden">
                   <div className={"absolute transition-all duration-300 text-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"}>
                     <AnimatePresence mode="wait">
-                      {!isApproved && (status === "idle" || tokenId != id) && (
+                      {!isApproved && (i.txStatus === "idle" || tokenId != i.id) && (
                         <motion.div
                           key="idle"
                           initial={{ opacity: 0, translateY: 33 }}
@@ -178,7 +203,7 @@ export default function ListNftWithApproval() {
                         </motion.div>
                       )}
 
-                      {!isApproved && tokenId == id && status === "waiting" && (
+                      {!isApproved && tokenId == i.id && i.txStatus === "waiting" && (
                         <motion.div
                           key="waiting"
                           initial={{ opacity: 0, translateY: 33 }}
@@ -190,60 +215,36 @@ export default function ListNftWithApproval() {
                           <span>Sign...</span>
                         </motion.div>
                       )}
-
-                      {!isApproved && tokenId == id && status === "loading" && (
+                      {!isApproved && tokenId == i.id && i.txHash && (
                         <motion.div
                           key="loading"
                           initial={{ opacity: 0, translateY: 33 }}
                           animate={{ opacity: 1, translateY: 0 }}
                           exit={{ opacity: 0, translateY: 33 }}
                           transition={{ duration: 0.2 }}
-                          className="flex justify-center items-center gap-2 text-center w-full"
+                          className="flex gap-4 justify-center flex-col items-center  text-center w-full absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200"
                         >
-                          <svg className="w-10 h-10 animate-spin" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
-                          </svg>
-                          <span>Approving...</span>
-                        </motion.div>
-                      )}
-
-                      {!isApproved && tokenId == id && status === "success" && (
-                        <motion.div
-                          key="success"
-                          initial={{ opacity: 0, translateY: 33 }}
-                          animate={{ opacity: 1, translateY: 0 }}
-                          exit={{ opacity: 0, translateY: 33 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex justify-center items-center gap-2 text-center w-full"
-                        >
-                          <svg className="w-10 h-10 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M9 12l2 2 4-4" />
-                          </svg>
-                        </motion.div>
-                      )}
-                      {!isApproved && tokenId == id && status == "error" && (
-                        <motion.div
-                          key={id}
-                          className="flex justify-center items-center gap-2 text-center w-min"
-                          initial={{ opacity: 0, translateY: 33 }}
-                          animate={{ opacity: 1, translateY: 0 }}
-                          exit={{ opacity: 0, translateY: 33 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <svg className="w-10 h-10 text-red-500" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" className="opacity-75" />
-
-                            <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-75" />
-                          </svg>
-                          <span>Error</span>
+                          {i.txStatus === "loading" && (
+                            <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
+                            </svg>
+                          )}
+                          {i.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d]" />}
+                          {i.txStatus === "error" && <RxCrossCircled className="text-red-500" />}
+                          <a target="_blank" href={`https://sepolia.etherscan.io/tx/${i.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
+                            <FaLink />
+                            <span>Tx: </span>
+                            <span>
+                              {i.txHash?.slice(0, 6)}...{i.txHash?.slice(-4)}
+                            </span>
+                          </a>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
-                  {isApproved && (
+                  {isApproved && !txHash && !i.listed && (
                     <AnimatePresence mode="wait">
-                      {tokenId == id && (
+                      {tokenId == i.id && (
                         <motion.div
                           className="absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full z-250"
                           initial={{ opacity: 0, scale: 0.8 }}
@@ -251,7 +252,7 @@ export default function ListNftWithApproval() {
                           exit={{ opacity: 0, scale: 0.8 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <div className="p-2 h-min flex justify-center  w-full  relative text-2xl">
+                          <div className="p-2 h-min flex justify-center  w-full  relative ">
                             <div className="flex justify-center gap-1 px-2 overflow-visible">
                               <input
                                 id="input-price"
@@ -270,20 +271,20 @@ export default function ListNftWithApproval() {
                     </AnimatePresence>
                   )}
                   {isApproved && (
-                    <div className={"absolute transition-all duration-300 " + (tokenId == id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")}>
+                    <div className={"absolute transition-all duration-300 " + (tokenId == i.id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2")}>
                       <AnimatePresence>
-                        {(status == "idle" || tokenId != id) && (
+                        {(i.txStatus == "idle" || tokenId != i.id || i.listed) && (
                           <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                            <span>List</span>
+                            {i.listed ? <div>{Number(i.price) / 1e18} ETH</div> : "List"}
                           </motion.div>
                         )}
-                        {tokenId == id &&
-                          ((status == "waiting" && (
+                        {tokenId == i.id &&
+                          ((i.txStatus == "waiting" && (
                             <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                               <span>Sign...</span>
                             </motion.div>
                           )) ||
-                            (status == "loading" && (
+                            (i.txStatus == "loading" && (
                               <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                                 <span>Listing...</span>
                               </motion.div>
@@ -291,74 +292,66 @@ export default function ListNftWithApproval() {
                       </AnimatePresence>
                     </div>
                   )}
-
-                  {tokenId == id && txHash && (
-                    <AnimatePresence>
-                      <motion.div
-                        className="top-45 absolute items-center gap-2  flex justify-center text-center w-full"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {/* {status == "loading" && (
-                          <motion.div
-                            key={id}
-                            className="flex justify-center text-center w-min"
-                            initial={{ opacity: 0, translateY: 10 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 10 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <svg className="w-5 h-5 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
-                            </svg>
+                  {isApproved && i.listed && tokenId == i.id && (
+                    <div className={"absolute transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"}>
+                      <AnimatePresence>
+                        {(i.txStatus == "idle" || tokenId != i.id || i.listed) && (
+                          <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                            Delist
                           </motion.div>
                         )}
-                        {status == "success" && (
-                          <motion.div
-                            key={id}
-                            className="flex justify-center text-center w-min"
-                            initial={{ opacity: 0, translateY: 10 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 10 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <svg className="w-5 h-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <path d="M9 12l2 2 4-4" />
-                            </svg>
-                          </motion.div>
-                        )}
-                        {status == "error" && (
-                          <motion.div
-                            key={id}
-                            className="flex justify-center text-center w-min"
-                            initial={{ opacity: 0, translateY: 10 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 10 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <svg className="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" className="opacity-75" />
-
-                              <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="opacity-75" />
-                            </svg>
-                          </motion.div>
-                        )} */}
-                        <a target="_blank" href={`https://sepolia.etherscan.io/tx/${txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
-                          <FaLink />
-                          <span>Tx: </span>
-                          <span>
-                            {txHash?.slice(0, 6)}...{txHash?.slice(-4)}
-                          </span>
-                        </a>
-                      </motion.div>
-                    </AnimatePresence>
+                        {tokenId == i.id &&
+                          ((i.txStatus == "waiting" && (
+                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                              <span>Sign...</span>
+                            </motion.div>
+                          )) ||
+                            (i.txStatus == "loading" && (
+                              <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
+                                <span>Listing...</span>
+                              </motion.div>
+                            )))}
+                      </AnimatePresence>
+                    </div>
                   )}
-                  <span className="absolute bottom-1 right-2 text-sm text-(--bg-secondary)!">
-                    <strong className=" opacity-50 text-sm ">id: </strong>
-                    {id}
+                  {tokenId == i.id && i.txHash && isApproved && (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0, translateY: 33 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      exit={{ opacity: 0, translateY: 33 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex gap-4 justify-center flex-col items-center  text-center w-full absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200"
+                    >
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0, translateY: 33 }}
+                        animate={{ opacity: 1, translateY: 0 }}
+                        exit={{ opacity: 0, translateY: 33 }}
+                        transition={{ duration: 0.2 }}
+                        className="flex gap-4 justify-center flex-col items-center  text-center w-full text-3xl"
+                      >
+                        {i.txStatus === "loading" && (
+                          <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
+                          </svg>
+                        )}
+                        {i.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d]" />}
+                        {i.txStatus === "error" && <RxCrossCircled className="text-red-500" />}
+                      </motion.div>
+                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${i.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
+                        <FaLink />
+                        <span>Tx: </span>
+                        <span>
+                          {i.txHash?.slice(0, 6)}...{i.txHash?.slice(-4)}
+                        </span>
+                      </a>
+                    </motion.div>
+                  )}
+
+                  <span className="absolute bottom-1 right-2  text-xs text-(--bg-secondary)!">
+                    <strong className=" opacity-50  ">id: </strong>
+                    {i.id}
                   </span>
                 </div>
               </motion.div>

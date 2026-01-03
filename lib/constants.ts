@@ -17,6 +17,29 @@ export type ListingsState = {
   all: IndexedListing[]
 }
 
+export type ListedNft = {
+  id: bigint
+
+  seller: `0x${string}`
+  collection: `0x${string}`
+  tokenId: bigint
+  price: bigint
+  createdAtBlock: bigint
+}
+
+export type UserNft = {
+  id: bigint
+  price: bigint
+  listed: boolean
+  txHash: string
+  txStatus: string
+}
+
+export type ListedNFTSProps = {
+  listings: ListedNft[]
+  userListings: ListedNft[]
+}
+
 export const listingCreatedEventAbi = "event ListingCreated(uint indexed id, address indexed collection, uint indexed tokenId, address seller, uint price)"
 export const listingCancelledEventAbi = "event ListingCancelled(uint indexed id, address indexed collection, uint indexed tokenId, address seller, uint price)"
 export const listingSoldEventAbi =
