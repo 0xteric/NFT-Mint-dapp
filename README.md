@@ -8,9 +8,9 @@ This repository is intended as a **technical showcase** for Web3 / Blockchain de
 
 ## 🚀 Live Demo
 
-* **Network:** Sepolia Testnet
-* **Contract:** ERC‑721 deployed and verified on Sepolia
-* **Wallet:** MetaMask / Injected wallets
+- **Network:** Sepolia Testnet
+- **Contract:** ERC‑721 deployed and verified on Sepolia
+- **Wallet:** MetaMask / Injected wallets
 
 ---
 
@@ -18,10 +18,10 @@ This repository is intended as a **technical showcase** for Web3 / Blockchain de
 
 The goal of this project is to demonstrate:
 
-* Real‑world smart contract design decisions
-* Secure NFT mint & burn flows
-* Clean frontend–contract integration
-* Professional tooling used in production Web3 stacks
+- Real‑world smart contract design decisions
+- Secure NFT mint & burn flows
+- Clean frontend–contract integration
+- Professional tooling used in production Web3 stacks
 
 ---
 
@@ -31,28 +31,30 @@ The goal of this project is to demonstrate:
 
 https://github.com/0xteric/SUP-NFT/blob/main/src/SupNFT.sol
 
-* ERC‑721 NFT implementation using OpenZeppelin
-* Public mint with:
+- ERC‑721 NFT implementation using OpenZeppelin
+- Public mint with:
 
-  * Max supply
-  * Max mint per transaction
-  * Fixed mint price
-* Burn functionality with automatic ETH refund
-* Reentrancy protection
-* Events for minting and burning
+  - Max supply
+  - Max mint per transaction
+  - Fixed mint price
+
+- Burn functionality with automatic ETH refund
+- Reentrancy protection
+- Events for minting and burning
 
 ### Frontend
 
-* Wallet connection (MetaMask)
-* Network detection & auto switch (Sepolia)
-* Mint UI with:
+- Wallet connection (MetaMask)
+- Network detection & auto switch (Sepolia)
+- Mint UI with:
 
-  * Validation
-  * Transaction lifecycle states (waiting signature → pending → success)
-  * Transaction hash & Etherscan link
-* Burn UI for owned NFTs
-* Live contract stats (price, total supply)
-* Automatic UI refresh after on‑chain actions
+  - Validation
+  - Transaction lifecycle states (waiting signature → pending → success)
+  - Transaction hash & Etherscan link
+
+- Burn UI for owned NFTs
+- Live contract stats (price, total supply)
+- Automatic UI refresh after on‑chain actions
 
 ---
 
@@ -60,31 +62,31 @@ https://github.com/0xteric/SUP-NFT/blob/main/src/SupNFT.sol
 
 ### Smart Contracts
 
-* **Solidity** ^0.8.x
-* **OpenZeppelin** (ERC721, Ownable, ReentrancyGuard)
-* **Foundry** (forge, scripts, local testing)
+- **Solidity** ^0.8.x
+- **OpenZeppelin** (ERC721, Ownable, ReentrancyGuard)
+- **Foundry** (forge, scripts, local testing)
 
 ### Frontend
 
-* **Next.js 14+** (App Router)
-* **React**
-* **TypeScript**
-* **wagmi** + **viem**
-* **TanStack Query**
-* **Tailwind CSS**
+- **Next.js 14+** (App Router)
+- **React**
+- **TypeScript**
+- **wagmi** + **viem**
+- **TanStack Query**
+- **Tailwind CSS**
 
 ### Network
 
-* **Ethereum Sepolia Testnet**
+- **Ethereum Sepolia Testnet**
 
 ---
 
 ## 🔐 Security Considerations
 
-* Reentrancy protection on ETH‑handling functions
-* Strict supply limits enforced on‑chain
-* ETH refund logic carefully ordered to avoid locked funds
-* No privileged minting (fair mint logic)
+- Reentrancy protection on ETH‑handling functions
+- Strict supply limits enforced on‑chain
+- ETH refund logic carefully ordered to avoid locked funds
+- No privileged minting (fair mint logic)
 
 ---
 
@@ -92,8 +94,8 @@ https://github.com/0xteric/SUP-NFT/blob/main/src/SupNFT.sol
 
 ### Prerequisites
 
-* Node.js 18+
-* Foundry
+- Node.js 18+
+- Foundry
 
 ### Install dependencies
 
@@ -130,20 +132,11 @@ forge script script/SupNFT.s.sol:SupNFTScript \
 
 ## 📌 What This Project Demonstrates
 
-* Full NFT lifecycle management
-* Secure ETH flows in smart contracts
-* Frontend–contract synchronization
-* Modern Web3 developer tooling
-* Clean and readable code structure
-
----
-
-## 👤 Author
-
-Built by **Fractalio**
-
-* GitHub: [https://github.com/your-username](https://github.com/your-username)
-* LinkedIn: [https://linkedin.com/in/your-profile](https://linkedin.com/in/your-profile)
+- Full NFT lifecycle management
+- Secure ETH flows in smart contracts
+- Frontend–contract synchronization
+- Modern Web3 developer tooling
+- Clean and readable code structure
 
 ---
 
