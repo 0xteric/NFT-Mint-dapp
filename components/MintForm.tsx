@@ -89,7 +89,7 @@ export default function MintForm() {
   }
 
   return (
-    <div className="flex flex-col items-center w-55 p-2 gap-2 relative">
+    <div className="flex flex-col items-center p-4 gap-2 relative justify-between">
       <div className="flex w-full rounded overflow-hidden">
         <button
           onClick={() => {
@@ -99,7 +99,7 @@ export default function MintForm() {
         >
           -
         </button>
-        <input type="number" min={1} max={5} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="border-none px-2 text-center flex-2" />
+        <input type="number" min={1} max={5} value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="border-none px-2 bg-(--accent)/30! text-center flex-2" />
         <button
           onClick={() => {
             if (amount < 5) setAmount(amount + 1)

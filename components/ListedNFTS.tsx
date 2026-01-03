@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react"
 import { usePublicClient, useAccount } from "wagmi"
-import { parseAbiItem, formatEther } from "viem"
-import { MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
+import { formatEther } from "viem"
 import { useBuy } from "./Contract"
-import { marketplaceAbi } from "@/lib/abi"
-import ListNftWithApproval from "./ListNFT"
+import { indexMarketplace } from "./useMarketplaceIndex"
 
 type ListedNft = {
   seller: `0x${string}`
@@ -22,89 +20,19 @@ export default function ListedNFTS() {
   const { buy } = useBuy()
 
   const [listings, setListings] = useState<ListedNft[]>([])
-  const [loading, setLoading] = useState(true)
   const [offerId, setOfferId] = useState<number | string>("")
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("idle")
-  const [error, setError] = useState<string | null>(null)
   const [txHash, setTxHash] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!publicClient) return
+    loadMarketplace()
+  }, [])
 
-    const fetchListings = async () => {
-      setLoading(true)
+  const loadMarketplace = async () => {
+    const logs = await indexMarketplace(publicClient, BigInt("9967517"))
+    console.log(logs)
 
-      const latest = await publicClient.getBlockNumber()
-
-      const listLogs = await getAllLogs({
-        publicClient,
-        address: MARKETPLACE_CONTRACT_ADDRESS,
-        event: parseAbiItem("event List(address indexed seller, address indexed collection, uint256 tokenId, uint256 price)"),
-        fromBlock: BigInt(9_952_524),
-        toBlock: latest,
-      })
-
-      const uniqueByToken = new Map<string, any>()
-
-      for (const log of listLogs) {
-        const key = `${log.args.collection}-${log.args.tokenId.toString()}`
-        uniqueByToken.set(key, log)
-      }
-
-      const uniqueListLogs = Array.from(uniqueByToken.values())
-
-      const stillActive: ListedNft[] = []
-
-      for (const nft of uniqueListLogs) {
-        const bid: any = await publicClient.readContract({
-          address: MARKETPLACE_CONTRACT_ADDRESS,
-          abi: marketplaceAbi,
-          functionName: "listings",
-          args: [nft.args.collection, nft.args.tokenId],
-        })
-
-        if (bid[3] > BigInt(0) && bid[1] !== "0x0000000000000000000000000000000000000000") {
-          stillActive.push(nft)
-        }
-      }
-
-      const parsed: ListedNft[] = stillActive.map((log: any) => ({
-        seller: log.args.seller!,
-        collection: log.args.collection!,
-        tokenId: log.args.tokenId!,
-        price: log.args.price!,
-        blockNum: log.blockNumber,
-      }))
-
-      const sorted: ListedNft[] = parsed.sort((a, b) => Number(a.price) - Number(b.price))
-
-      setListings(sorted)
-      setLoading(false)
-    }
-
-    fetchListings()
-  }, [publicClient])
-
-  async function getAllLogs({ publicClient, address, event, fromBlock, toBlock }: { publicClient: any; address: `0x${string}`; event: any; fromBlock: bigint; toBlock: bigint }) {
-    const MAX_BLOCKS = BigInt(1000)
-    let currentFrom = fromBlock
-    let logs: any[] = []
-
-    while (currentFrom <= toBlock) {
-      const currentTo = currentFrom + MAX_BLOCKS > toBlock ? toBlock : currentFrom + MAX_BLOCKS
-
-      const chunk = await publicClient.getLogs({
-        address,
-        event,
-        fromBlock: currentFrom,
-        toBlock: currentTo,
-      })
-
-      logs.push(...chunk)
-      currentFrom = currentTo + BigInt(1)
-    }
-
-    return logs
+    setListings(logs)
   }
 
   const handleBuy = async (tokenId: bigint, price: bigint) => {
@@ -144,11 +72,9 @@ export default function ListedNFTS() {
     }
   }
 
-  if (loading) {
+  if (status == "loading" && listings.length === 0) {
     return <p>Cargando NFTs listados...</p>
-  }
-
-  if (listings.length === 0) {
+  } else if (listings.length === 0) {
     return <p>No hay NFTs listados</p>
   }
 

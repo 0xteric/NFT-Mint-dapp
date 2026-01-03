@@ -94,39 +94,34 @@ export default function BurnCard() {
   }
 
   return (
-    <div className="card rounded p-4 flex flex-col gap-4 min-w-[250px] min-h-[150px]">
-      <h2 className="text-lg font-bold">Your NFTs</h2>
-
-      {(!address && <ConnectWallet textMsg="Connect " />) ||
-        (loading && <p>Loading your NFTs...</p>) ||
-        (tokenIds.length === 0 && (
-          <div className=" rounded border border-(--accent) text-center flex items-center p-6 text-(--accent) opacity-70  w-fit aspect-square">
-            <span>No NFTs</span>
-          </div>
-        ))}
-      {tokenIds.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
-          {tokenIds.map((id, index) => (
-            <AnimatePresence key={id}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className="aspect-square min-w-25"
-              >
-                <button onClick={() => handleBurn(id)} disabled={burningId === id} className="relative w-full h-full  rounded hover:opacity-80 disabled:opacity-50">
-                  {burningId === id ? (status === "waiting" ? "Sign..." : "Burning...") : "Burn"}
-                  <span className="absolute bottom-1 right-2 text-sm text-(--bg-secondary)!">
-                    <strong className=" opacity-50 text-sm ">id: </strong>
-                    {id}
-                  </span>
-                </button>
-              </motion.div>
-            </AnimatePresence>
+    <div className="flex-col gap-4 justify-between flex p-4 w-full">
+      <div className="grid  grid-cols-2 md:grid-cols-4 gap-3 bg-(--bg-secondary) p-4 rounded-xl border-(--accent)/30 border max-h-35 lg:max-h-65 overflow-y-scroll no-scrollbar">
+        {(loading && <p>Loading your NFTs...</p>) ||
+          (tokenIds.length === 0 && (
+            <div className=" rounded border border-(--accent) text-center flex items-center p-6 text-(--accent) opacity-70  w-fit aspect-square">
+              <span>No NFTs</span>
+            </div>
           ))}
-        </div>
-      )}
+        {tokenIds.map((id, index) => (
+          <AnimatePresence key={id}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className="aspect-square min-w-25"
+            >
+              <button onClick={() => handleBurn(id)} disabled={burningId === id} className="relative w-full h-full  rounded hover:opacity-80 disabled:opacity-50">
+                {burningId === id ? (status === "waiting" ? "Sign..." : "Burning...") : "Burn"}
+                <span className="absolute bottom-1 right-2 text-sm text-(--bg-secondary)!">
+                  <strong className=" opacity-50 text-sm ">id: </strong>
+                  {id}
+                </span>
+              </button>
+            </motion.div>
+          </AnimatePresence>
+        ))}
+      </div>
       <AnimatePresence>
         {txHash && (
           <motion.div
@@ -168,6 +163,17 @@ export default function BurnCard() {
           </motion.div>
         )}
       </AnimatePresence>
+      {(address && (
+        <button
+          className="px-2 py-1 
+         font-semibold
+        hover:scale-103 transition
+        shadow-lg shadow-[#6366f1]/30
+        w-full rounded  "
+        >
+          Burn
+        </button>
+      )) || <ConnectWallet textMsg="Connect " />}
     </div>
   )
 }

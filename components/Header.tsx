@@ -8,7 +8,7 @@ import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export default function Header() {
-  const [menuCard, setMenuCard] = useState(true)
+  const [menuCard, setMenuCard] = useState(false)
 
   const pathname = usePathname()
 

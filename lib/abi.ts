@@ -329,3 +329,44 @@ export const marketplaceAbi = [
   { inputs: [], name: "basisPoints", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
   { inputs: [], name: "maxRoyaltyFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
 ]
+export const marketplaceEventsAbi = [
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
+      { indexed: true, internalType: "address", name: "collection", type: "address" },
+      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+      { indexed: false, internalType: "address", name: "seller", type: "address" },
+      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
+    ],
+    name: "ListingCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
+      { indexed: true, internalType: "address", name: "collection", type: "address" },
+      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+      { indexed: false, internalType: "address", name: "seller", type: "address" },
+      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
+    ],
+    name: "ListingCancelled",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
+      { indexed: true, internalType: "address", name: "collection", type: "address" },
+      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
+      { indexed: false, internalType: "address", name: "seller", type: "address" },
+      { indexed: false, internalType: "address", name: "buyer", type: "address" },
+      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
+      { indexed: false, internalType: "uint256", name: "marketplaceFee", type: "uint256" },
+      { indexed: false, internalType: "uint256", name: "royaltyFee", type: "uint256" },
+    ],
+    name: "ListingSold",
+    type: "event",
+  },
+]
