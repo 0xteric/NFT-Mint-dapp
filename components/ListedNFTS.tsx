@@ -138,7 +138,7 @@ export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProp
                   <div
                     className={
                       "absolute transition-all duration-300 " +
-                      (Number(offerId) != Number(nft.tokenId) && !tx.txHash ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs md:text-sm lg:text-xl" : "top-2 left-3 text-sm")
+                      (Number(offerId) != Number(nft.tokenId) && !tx.txHash ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs md:text-sm lg:text-xl" : "top-2 left-3 text-[10px]")
                     }
                   >
                     <p>{formatEther(nft.price)} ETH</p>
