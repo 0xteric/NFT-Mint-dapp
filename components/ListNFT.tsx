@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { Address, parseEther, erc721Abi } from "viem"
 import { useAccount, useReadContract, useWriteContract } from "wagmi"
 import { nftAbi } from "@/lib/abi"
-import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS } from "@/lib/constants"
+import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, SortBy, SortDir } from "@/lib/constants"
 import { useList, useCancelList, useUserTokens } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
@@ -14,7 +14,7 @@ import { RxCrossCircled } from "react-icons/rx"
 import { ListedNFTSProps, TxState, UserNft } from "@/lib/constants"
 import { useQueryClient } from "@tanstack/react-query"
 
-export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
+export default function ListNftWithApproval({ userListings, sortBy, sortDir }: ListedNFTSProps) {
   const [collection, setCollection] = useState<Address | "">(NFT_CONTRACT_ADDRESS)
   const [txMap, setTxMap] = useState<Record<string, TxState>>({})
   const [tokenId, setTokenId] = useState<bigint | "">("")
@@ -195,6 +195,22 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
     }
   }
 
+  function sortByField<T>(items: T[], getId: (item: T) => bigint, getPrice: (item: T) => bigint) {
+    return [...items].sort((a, b) => {
+      const aVal = sortBy === "id" ? getId(a) : getPrice(a)
+      const bVal = sortBy === "id" ? getId(b) : getPrice(b)
+
+      const diff = aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+      return sortDir === "asc" ? diff : -diff
+    })
+  }
+
+  const sortedUserItems = sortByField(
+    items,
+    (i) => i.id,
+    (i) => i.price
+  )
+
   return (
     <div onClick={handleBgClick} className=" flex flex-col gap-2">
       {!address && (
@@ -212,7 +228,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
           </div>
         )}
         {items.length > 0 &&
-          items.map((i, index) => {
+          sortedUserItems.map((i, index) => {
             const key = i.id.toString()
             const tx = txMap[key] ?? { txStatus: "idle" }
 

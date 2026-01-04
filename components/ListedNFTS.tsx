@@ -7,11 +7,11 @@ import { useBuy } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import { RxCrossCircled } from "react-icons/rx"
 import { FiCheckCircle } from "react-icons/fi"
-import { ListedNft, ListedNFTSProps, TxState } from "@/lib/constants"
+import { ListedNFTSProps, TxState, SortBy, SortDir } from "@/lib/constants"
 import { FaUser, FaLink } from "react-icons/fa"
 import { useQueryClient } from "@tanstack/react-query"
 
-export default function ListedNFTS({ listings }: ListedNFTSProps) {
+export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProps) {
   const queryClient = useQueryClient()
   const publicClient = usePublicClient()
   const { address } = useAccount()
@@ -87,6 +87,22 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
     }))
   }
 
+  function sortByField<T>(items: T[], getId: (item: T) => bigint, getPrice: (item: T) => bigint) {
+    return [...items].sort((a, b) => {
+      const aVal = sortBy === "id" ? getId(a) : getPrice(a)
+      const bVal = sortBy === "id" ? getId(b) : getPrice(b)
+
+      const diff = aVal > bVal ? 1 : aVal < bVal ? -1 : 0
+      return sortDir === "asc" ? diff : -diff
+    })
+  }
+
+  const sortedListings = sortByField(
+    listings,
+    (l) => l.tokenId,
+    (l) => l.price
+  )
+
   if (listings.length === 0 && status == "idle") {
     return <p>No hay NFTs listados</p>
   }
@@ -100,7 +116,7 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
           </div>
         )}
 
-        {listings.map((nft, idx) => {
+        {sortedListings.map((nft, idx) => {
           const key = nft.tokenId.toString()
           const tx = txMap[key] ?? { txStatus: "idle" }
 

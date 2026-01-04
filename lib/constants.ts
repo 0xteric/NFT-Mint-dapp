@@ -40,7 +40,12 @@ export type TxState = {
 export type ListedNFTSProps = {
   listings: ListedNft[]
   userListings: ListedNft[]
+  sortBy: SortBy
+  sortDir: SortDir
 }
+
+export type SortBy = "id" | "price"
+export type SortDir = "asc" | "desc"
 
 export const listingCreatedEventAbi = "event ListingCreated(uint indexed id, address indexed collection, uint indexed tokenId, address seller, uint price)"
 export const listingCancelledEventAbi = "event ListingCancelled(uint indexed id, address indexed collection, uint indexed tokenId, address seller, uint price)"
