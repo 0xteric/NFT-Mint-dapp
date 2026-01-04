@@ -109,7 +109,7 @@ export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProp
 
   return (
     <div onClick={handleBgClick} className="flex flex-col gap-2">
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {status == "loading" && (
           <div className="w-full relative flex justify-center  aspect-square  px-4  animate-pulse">
             <div className="absolute w-full h-full bg-(--accent) opacity-50 rounded"></div>
@@ -215,11 +215,11 @@ export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProp
                     </div>
                   )}
 
-                  <div className="absolute bottom-0 flex flex-row justify-between w-full  items-end text-(--bg-secondary)">
-                    <p className="text-xs  flex items-center gap-1 mt-2 p-2">
+                  <div className="absolute text-[10px] md:text-xs bottom-0 flex flex-row justify-between w-full  items-end text-(--bg-secondary)">
+                    <p className="  flex items-center gap-1 mt-2 p-2">
                       <FaUser className="text-(--bg-secondary)/60" /> {nft.seller.toLowerCase() != address?.toLowerCase() ? nft.seller.slice(0, 5) : "You"}
                     </p>
-                    <p className="mt-2 p-2 text-xs flex items-center gap-1 md:ml-0 -ml-2">
+                    <p className="mt-2 p-2    flex items-center gap-1 md:ml-0 -ml-2">
                       <strong className="text-(--bg-secondary)/60 font-bold ">id:</strong>
                       <span className=""> {nft.tokenId.toString()}</span>
                     </p>

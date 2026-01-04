@@ -55,7 +55,7 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-      <section className="w-full mt-5 relative p-10">
+      <section className="w-full mt-5 relative py-10">
         <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full">
           <div className="border-b border-(--accent)/50">
             <div className="flex justify-between items-center">
