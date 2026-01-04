@@ -3,6 +3,8 @@
 import { useReadContract, useWriteContract, usePublicClient } from "wagmi"
 import { nftAbi, marketplaceAbi } from "@/lib/abi"
 import { NFT_CONTRACT_ADDRESS, MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
+import { indexMarketplace } from "./useMarketplaceIndex"
+import { useQuery } from "@tanstack/react-query"
 
 export function useNftStats() {
   const { data: totalSupply } = useReadContract({
@@ -31,6 +33,23 @@ export function useNftStats() {
     maxSupply,
     mintPrice,
   }
+}
+
+export function useUserTokens(address: `0x${string}`) {
+  const publicClient = usePublicClient()
+
+  return useQuery({
+    queryKey: ["user-tokens", address],
+    enabled: Boolean(address),
+    queryFn: async () => {
+      return publicClient?.readContract({
+        address: NFT_CONTRACT_ADDRESS,
+        abi: nftAbi,
+        functionName: "tokensOfOwner",
+        args: [address],
+      })
+    },
+  })
 }
 
 export function useMint() {
@@ -98,6 +117,20 @@ export function useListing(tokenId: number) {
   })
 
   return { listing }
+}
+
+export function useMarketplaceListings(fromBlock: bigint) {
+  const publicClient = usePublicClient()
+
+  return useQuery({
+    queryKey: ["marketplace-listings"],
+    queryFn: async () => {
+      const listings = await indexMarketplace(publicClient, fromBlock)
+      return listings.filter((l) => l.status === "ACTIVE")
+    },
+    staleTime: 30_000, // 30s
+    refetchOnWindowFocus: false,
+  })
 }
 
 // ----------- WRITE HOOKS ------------

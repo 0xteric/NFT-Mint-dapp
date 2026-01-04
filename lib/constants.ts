@@ -23,8 +23,6 @@ export type ListedNft = {
   collection: `0x${string}`
   tokenId: bigint
   price: bigint
-  txHash: string
-  txStatus: string
   createdAtBlock: bigint
 }
 
@@ -32,8 +30,11 @@ export type UserNft = {
   id: bigint
   price: bigint
   listed: boolean
-  txHash: string
-  txStatus: string
+}
+
+export type TxState = {
+  txHash?: string
+  txStatus: "idle" | "waiting" | "loading" | "success" | "error"
 }
 
 export type ListedNFTSProps = {
