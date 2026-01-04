@@ -18,21 +18,23 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
 
   const [localListings, setListings] = useState<ListedNft[]>([])
   const [offerId, setOfferId] = useState<number | string>("")
-  const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("idle")
-  const [txHash, setTxHash] = useState<string | null>(null)
+  const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
 
   useEffect(() => {
     setListings(listings)
+    setStatus("idle")
   }, [listings])
 
   const handleBuy = async (tokenId: bigint, price: bigint) => {
     try {
-      setStatus("waiting")
-
+      setListingProp(tokenId, "txStatus", "waiting")
+      setTimeout(() => {
+        console.log(offerId, localListings)
+      }, 2000)
       const hash = await buy(tokenId, price)
-      setTxHash(hash)
 
-      setStatus("loading")
+      setListingProp(tokenId, "txHash", hash)
+      setListingProp(tokenId, "txStatus", "loading")
 
       const TxReceipt = await publicClient?.waitForTransactionReceipt({
         hash,
@@ -40,22 +42,20 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
 
       if (TxReceipt?.status === "reverted") throw new Error("Reverted")
 
-      setStatus("success")
+      setListingProp(tokenId, "txStatus", "success")
 
       setTimeout(() => {
         setListings(localListings.filter((l) => l.tokenId != tokenId))
-        setStatus("idle")
-        setTxHash(null)
       }, 3500)
     } catch (e: any) {
       if (e?.shortMessage === "User rejected the request.") {
-        setStatus("idle")
-        setTxHash(null)
+        setListingProp(tokenId, "txHash", null)
+        setListingProp(tokenId, "txStatus", "idle")
       } else {
-        setStatus("error")
+        setListingProp(tokenId, "txStatus", "error")
         setTimeout(() => {
-          setStatus("idle")
-          setTxHash(null)
+          setListingProp(tokenId, "txHash", null)
+          setListingProp(tokenId, "txStatus", "idle")
         }, 3500)
       }
     }
@@ -67,15 +67,23 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
     }
   }
 
-  if (status == "loading" && localListings.length === 0) {
-    return <p>Cargando NFTs listados...</p>
-  } else if (localListings.length === 0) {
+  const setListingProp = (id: bigint, prop: string, value: any | null) => {
+    setListings((prev: any) => prev.map((l: any) => (l.tokenId === id ? { ...l, [prop]: value } : l)))
+  }
+
+  if (localListings.length === 0 && status == "idle") {
     return <p>No hay NFTs listados</p>
   }
 
   return (
     <div onClick={handleBgClick} className="flex flex-col gap-2">
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {status == "loading" && (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
+            <div className="w-full flex justify-center rounded py-28 px-4 bg-(--accent) animate-pulse"></div>
+          </div>
+        )}
+
         {localListings.map((nft, idx) => (
           <AnimatePresence>
             <motion.div initial={{ opacity: 0, scale: 1 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1 }} transition={{ duration: 0.1, delay: idx * 0.1 }}>
@@ -96,14 +104,15 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
                 ></button>
                 <div
                   className={
-                    "absolute transition-all duration-300 " + (Number(offerId) != Number(nft.tokenId) ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:text-2xl" : "top-2 left-3 text-sm")
+                    "absolute transition-all duration-300 " +
+                    (Number(offerId) != Number(nft.tokenId) && !nft.txHash ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 md:text-2xl" : "top-2 left-3 text-sm")
                   }
                 >
                   <p>{formatEther(nft.price)} ETH</p>
                 </div>
 
                 {address ? (
-                  (status == "idle" && (
+                  (nft.txStatus == "idle" && (
                     <div
                       id="buy-btn"
                       className={
@@ -114,7 +123,7 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
                       BUY
                     </div>
                   )) ||
-                  (status == "waiting" && (
+                  (nft.txStatus == "waiting" && (
                     <div
                       className={
                         "absolute transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
@@ -124,55 +133,35 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
                       Sign...
                     </div>
                   )) ||
-                  (status == "loading" && (
-                    <div
+                  (nft.txHash && (
+                    <motion.div
+                      key="loading"
+                      initial={{ opacity: 0, translateY: 33 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      exit={{ opacity: 0, translateY: 33 }}
+                      transition={{ duration: 0.2 }}
                       className={
-                        "absolute flex items-center justify-center gap-2  transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
-                        (Number(offerId) != Number(nft.tokenId) ? " scale-0 opacity-15" : " scale-100 opacity-100")
+                        "absolute flex flex-col gap-2 items-center justify-center   transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
+                        (Number(offerId) != Number(nft.tokenId) && !nft.txHash ? " scale-0 opacity-15" : " scale-100 opacity-100")
                       }
                     >
-                      <svg className="w-4 h-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
-                      </svg>
-                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
+                      <motion.div initial={{ opacity: 0, translateY: 13 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: 13 }} transition={{ duration: 0.2 }}>
+                        {nft.txStatus == "loading" && (
+                          <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
+                          </svg>
+                        )}
+                        {nft.txStatus == "success" && <FiCheckCircle className="text-[#6dfa6d] w-8 h-8" />}
+                        {nft.txStatus == "error" && <RxCrossCircled className="text-red-500 w-8 h-8" />}
+                      </motion.div>
+
+                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${nft.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
                         <span>Tx: </span>
                         <span>
-                          {txHash?.slice(0, 6)}...{txHash?.slice(-4)}
+                          {nft.txHash?.slice(0, 6)}...{nft.txHash?.slice(-4)}
                         </span>
                       </a>
-                    </div>
-                  )) ||
-                  (status == "success" && (
-                    <div
-                      className={
-                        "absolute flex items-center justify-center gap-2  transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
-                        (Number(offerId) != Number(nft.tokenId) ? " scale-0 opacity-15" : " scale-100 opacity-100")
-                      }
-                    >
-                      <FiCheckCircle className="text-[#6dfa6d]" />
-                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
-                        <span>Tx: </span>
-                        <span>
-                          {txHash?.slice(0, 6)}...{txHash?.slice(-4)}
-                        </span>
-                      </a>
-                    </div>
-                  )) ||
-                  (status == "error" && (
-                    <div
-                      className={
-                        "absolute flex items-center justify-center gap-2  transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
-                        (Number(offerId) != Number(nft.tokenId) ? " scale-0 opacity-15" : " scale-100 opacity-100")
-                      }
-                    >
-                      <RxCrossCircled className="text-red-500" />
-                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
-                        <span>Tx: </span>
-                        <span>
-                          {txHash?.slice(0, 6)}...{txHash?.slice(-4)}
-                        </span>
-                      </a>
-                    </div>
+                    </motion.div>
                   ))
                 ) : (
                   <div
@@ -187,7 +176,7 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
 
                 <div className="absolute bottom-0 flex flex-row justify-between w-full  items-end text-(--bg-secondary)">
                   <p className="text-xs  flex items-center gap-1 mt-2 p-2">
-                    <FaUser className="text-(--bg-secondary)/60" /> {nft.seller.slice(0, 5)}
+                    <FaUser className="text-(--bg-secondary)/60" /> {nft.seller.toLowerCase() != address?.toLowerCase() ? nft.seller.slice(0, 5) : "You"}
                   </p>
                   <p className="mt-2 p-2 text-xs flex items-center gap-1 md:ml-0 -ml-2">
                     <strong className="text-(--bg-secondary)/60 font-bold ">id:</strong>

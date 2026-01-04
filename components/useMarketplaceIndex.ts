@@ -59,6 +59,8 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
           seller: parsed.args.seller,
           price: parsed.args.price,
           status: "ACTIVE",
+          txHash: "",
+          txStatus: "idle",
           createdAtBlock: log.blockNumber,
           updatedAtBlock: log.blockNumber,
         })

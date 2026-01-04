@@ -19,11 +19,12 @@ export type ListingsState = {
 
 export type ListedNft = {
   id: bigint
-
   seller: `0x${string}`
   collection: `0x${string}`
   tokenId: bigint
   price: bigint
+  txHash: string
+  txStatus: string
   createdAtBlock: bigint
 }
 

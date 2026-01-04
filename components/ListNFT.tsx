@@ -24,7 +24,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
   const [tokenId, setTokenId] = useState<bigint | "">("")
   const [price, setPrice] = useState<number | string>("")
   const [txHash, setTxHash] = useState<string | null>(null)
-  const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("idle")
+  const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
   const [items, setUserItems] = useState<UserNft[]>([])
 
   useEffect(() => {
@@ -64,6 +64,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
       } else {
         setUserItems(_items)
       }
+      setStatus("idle")
     } catch (err) {
       console.error("Error cargando tokens:", err)
       setUserItems([])
@@ -194,6 +195,11 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
           </div>
         </div>
       )}
+      {status === "idle" && !items.length && <div className="w-full flex justify-center rounded  p-4 ">No NFTs</div>}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 w-full">
+        {status === "loading" && <div className="w-full flex justify-center rounded py-27 px-4 bg-(--accent) animate-pulse"></div>}
+      </div>
+
       {items.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
           {items.map((i, index) => (
@@ -310,14 +316,14 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                     </AnimatePresence>
                   )}
                   {isApproved && (
-                    <div className={"absolute transition-all duration-300 " + (tokenId == i.id ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 lg:text-2xl")}>
+                    <div className={"absolute transition-all duration-300 " + (tokenId == i.id || i.txHash ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 lg:text-2xl")}>
                       <AnimatePresence>
-                        {(i.txStatus == "idle" || tokenId != i.id || i.listed) && (
+                        {(i.txStatus == "idle" || (tokenId != i.id && !i.txHash) || i.listed) && (
                           <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                             {i.listed ? <div>{Number(i.price) / 1e18} ETH</div> : "List"}
                           </motion.div>
                         )}
-                        {tokenId == i.id &&
+                        {(tokenId == i.id || i.txHash) &&
                           ((i.txStatus == "waiting" && !i.listed && (
                             <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
                               <span>Sign...</span>
@@ -347,7 +353,7 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                       </AnimatePresence>
                     </div>
                   )}
-                  {tokenId == i.id && i.txHash && isApproved && (
+                  {i.txHash && isApproved && (
                     <motion.div
                       key="loading"
                       initial={{ opacity: 0, translateY: 33 }}
@@ -362,15 +368,15 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                         animate={{ opacity: 1, translateY: 0 }}
                         exit={{ opacity: 0, translateY: 33 }}
                         transition={{ duration: 0.2 }}
-                        className="flex gap-4 justify-center flex-col items-center  text-center w-full text-3xl"
+                        className="flex gap-4 justify-center flex-col items-center  text-center w-full "
                       >
                         {i.txStatus === "loading" && (
                           <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
                           </svg>
                         )}
-                        {i.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d]" />}
-                        {i.txStatus === "error" && <RxCrossCircled className="text-red-500" />}
+                        {i.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d] w-8 h-8" />}
+                        {i.txStatus === "error" && <RxCrossCircled className="text-red-500 w-8 h-8" />}
                       </motion.div>
                       <a target="_blank" href={`https://sepolia.etherscan.io/tx/${i.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
                         <FaLink />
