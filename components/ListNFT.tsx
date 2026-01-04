@@ -356,29 +356,30 @@ export default function ListNftWithApproval({ userListings }: ListedNFTSProps) {
                   {i.txHash && isApproved && (
                     <motion.div
                       key="loading"
-                      initial={{ opacity: 0, translateY: 33 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      exit={{ opacity: 0, translateY: 33 }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
                       transition={{ duration: 0.2 }}
                       className="flex gap-4 justify-center flex-col items-center  text-center w-full absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200"
                     >
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0, translateY: 33 }}
-                        animate={{ opacity: 1, translateY: 0 }}
-                        exit={{ opacity: 0, translateY: 33 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex gap-4 justify-center flex-col items-center  text-center w-full "
-                      >
-                        {i.txStatus === "loading" && (
-                          <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                      {i.txStatus === "loading" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <svg className=" w-4 h-4 lg:w-8 lg:h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
                             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
                           </svg>
-                        )}
-                        {i.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d] w-8 h-8" />}
-                        {i.txStatus === "error" && <RxCrossCircled className="text-red-500 w-8 h-8" />}
-                      </motion.div>
-                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${i.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
+                        </motion.div>
+                      )}
+                      {i.txStatus === "success" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <FiCheckCircle className="text-[#6dfa6d] w-4 h-4 lg:w-8 lg:h-8" />
+                        </motion.div>
+                      )}
+                      {i.txStatus === "error" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <RxCrossCircled className="text-red-500 w-4 h-4 lg:w-8 lg:h-8" />
+                        </motion.div>
+                      )}
+                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${i.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200 text-xs lg:text-xl">
                         <FaLink />
                         <span>Tx: </span>
                         <span>

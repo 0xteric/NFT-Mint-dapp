@@ -4,12 +4,11 @@ import { useEffect, useState } from "react"
 import { usePublicClient, useAccount } from "wagmi"
 import { formatEther } from "viem"
 import { useBuy } from "./Contract"
-import { indexMarketplace } from "./useMarketplaceIndex"
 import { motion, AnimatePresence } from "framer-motion"
 import { RxCrossCircled } from "react-icons/rx"
 import { FiCheckCircle } from "react-icons/fi"
 import { ListedNft, ListedNFTSProps } from "@/lib/constants"
-import { FaUser } from "react-icons/fa"
+import { FaUser, FaLink } from "react-icons/fa"
 
 export default function ListedNFTS({ listings }: ListedNFTSProps) {
   const publicClient = usePublicClient()
@@ -136,27 +135,35 @@ export default function ListedNFTS({ listings }: ListedNFTSProps) {
                   (nft.txHash && (
                     <motion.div
                       key="loading"
-                      initial={{ opacity: 0, translateY: 33 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      exit={{ opacity: 0, translateY: 33 }}
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
                       transition={{ duration: 0.2 }}
                       className={
-                        "absolute flex flex-col gap-2 items-center justify-center   transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 " +
+                        "absolute flex flex-col gap-2 items-center justify-center  transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200 " +
                         (Number(offerId) != Number(nft.tokenId) && !nft.txHash ? " scale-0 opacity-15" : " scale-100 opacity-100")
                       }
                     >
-                      <motion.div initial={{ opacity: 0, translateY: 13 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: 13 }} transition={{ duration: 0.2 }}>
-                        {nft.txStatus == "loading" && (
-                          <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" strokeDasharray="28 56" strokeLinecap="round" />
+                      {nft.txStatus === "loading" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <svg className=" w-4 h-4 lg:w-8 lg:h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
                           </svg>
-                        )}
-                        {nft.txStatus == "success" && <FiCheckCircle className="text-[#6dfa6d] w-8 h-8" />}
-                        {nft.txStatus == "error" && <RxCrossCircled className="text-red-500 w-8 h-8" />}
-                      </motion.div>
+                        </motion.div>
+                      )}
+                      {nft.txStatus === "success" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <FiCheckCircle className="text-[#6dfa6d] w-4 h-4 lg:w-8 lg:h-8" />
+                        </motion.div>
+                      )}
+                      {nft.txStatus === "error" && (
+                        <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
+                          <RxCrossCircled className="text-red-500 w-4 h-4 lg:w-8 lg:h-8" />
+                        </motion.div>
+                      )}
 
-                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${nft.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
-                        <span>Tx: </span>
+                      <a target="_blank" href={`https://sepolia.etherscan.io/tx/${nft.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200 text-xs lg:text-xl">
+                        <FaLink />
                         <span>
                           {nft.txHash?.slice(0, 6)}...{nft.txHash?.slice(-4)}
                         </span>
