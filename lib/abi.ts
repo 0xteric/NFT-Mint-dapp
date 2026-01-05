@@ -92,281 +92,271 @@ export const nftAbi = [
 ] as const
 
 export const marketplaceAbi = [
-  { inputs: [{ internalType: "uint256", name: "_initialFee", type: "uint256" }], stateMutability: "nonpayable", type: "constructor" },
   {
-    anonymous: false,
+    type: "constructor",
     inputs: [
-      { indexed: true, internalType: "address", name: "seller", type: "address" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: false, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
+      {
+        name: "_initialFee",
+        type: "uint256",
+      },
     ],
-    name: "List",
-    type: "event",
+    stateMutability: "nonpayable",
   },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "seller", type: "address" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: false, internalType: "uint256", name: "tokenId", type: "uint256" },
-    ],
-    name: "CancelList",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "bidder", type: "address" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
-    ],
-    name: "BidCollection",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "bidder", type: "address" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: false, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
-    ],
-    name: "BidToken",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "bidder", type: "address" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-    ],
-    name: "CancelBid",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "seller", type: "address" },
-      { indexed: true, internalType: "address", name: "buyer", type: "address" },
-      { indexed: false, internalType: "uint256", name: "tokenId", type: "uint256" },
-    ],
-    name: "Sale",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: false, internalType: "uint256", name: "fee", type: "uint256" },
-    ],
-    name: "RoyaltiesUpdated",
-    type: "event",
-  },
-  { anonymous: false, inputs: [{ indexed: true, internalType: "uint256", name: "fee", type: "uint256" }], name: "MarketplaceFeeUpdated", type: "event" },
-  { anonymous: false, inputs: [{ indexed: true, internalType: "address", name: "receiver", type: "address" }], name: "MarketplaceFeeReceiverUpdated", type: "event" },
+
+  /* ─────────────── Views ─────────────── */
 
   {
+    type: "function",
+    name: "isListed",
     inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-      { internalType: "uint256", name: "_price", type: "uint256" },
+      { name: "collection", type: "address" },
+      { name: "tokenId", type: "uint256" },
     ],
+    outputs: [{ type: "bool" }],
+    stateMutability: "view",
+  },
+
+  {
+    type: "function",
+    name: "nextListingId",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "marketplaceFee",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "basisPoints",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "maxRoyaltyFee",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "feeReceiver",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalListings",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalSales",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "totalVolume",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+
+  /* ─────────────── Listings ─────────────── */
+
+  {
+    type: "function",
     name: "list",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+      { name: "_price", type: "uint256" },
+    ],
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-    ],
+    type: "function",
     name: "cancelList",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+    ],
     outputs: [],
     stateMutability: "nonpayable",
-    type: "function",
   },
   {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_price", type: "uint256" },
-      { internalType: "uint256", name: "_quantity", type: "uint256" },
-    ],
-    name: "bidCollection",
-    outputs: [],
-    stateMutability: "payable",
     type: "function",
-  },
-  { inputs: [{ internalType: "address", name: "_collection", type: "address" }], name: "cancelCollectionBid", outputs: [], stateMutability: "nonpayable", type: "function" },
-  {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "address", name: "_bidder", type: "address" },
-      { internalType: "uint256[]", name: "_tokensId", type: "uint256[]" },
-    ],
-    name: "acceptCollectionBid",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-      { internalType: "uint256", name: "_price", type: "uint256" },
-    ],
-    name: "bidToken",
-    outputs: [],
-    stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "address", name: "_bidder", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-    ],
-    name: "acceptTokenBid",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-    ],
-    name: "cancelTokenBid",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "uint256", name: "_tokenId", type: "uint256" },
-    ],
     name: "buy",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+    ],
     outputs: [],
     stateMutability: "payable",
-    type: "function",
   },
 
-  { inputs: [{ internalType: "uint256", name: "_newFee", type: "uint256" }], name: "updateMarketplaceFee", outputs: [], stateMutability: "nonpayable", type: "function" },
-  { inputs: [{ internalType: "address", name: "_newReceiver", type: "address" }], name: "updateFeeReceiver", outputs: [], stateMutability: "nonpayable", type: "function" },
+  /* ─────────────── Collection Bids ─────────────── */
+
   {
+    type: "function",
+    name: "bidCollection",
     inputs: [
-      { internalType: "address", name: "_collection", type: "address" },
-      { internalType: "address", name: "_collectionOwner", type: "address" },
-      { internalType: "uint256", name: "_royalty", type: "uint256" },
+      { name: "_collection", type: "address" },
+      { name: "_price", type: "uint256" },
+      { name: "_quantity", type: "uint256" },
     ],
-    name: "updateRoyalties",
+    outputs: [],
+    stateMutability: "payable",
+  },
+  {
+    type: "function",
+    name: "cancelCollectionBid",
+    inputs: [{ name: "_collection", type: "address" }],
     outputs: [],
     stateMutability: "nonpayable",
+  },
+  {
     type: "function",
+    name: "acceptCollectionBid",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_bidder", type: "address" },
+      { name: "_tokensId", type: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
 
+  /* ─────────────── Token Bids ─────────────── */
+
   {
-    inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
-    ],
-    name: "listings",
-    outputs: [
-      { internalType: "address", name: "collection", type: "address" },
-      { internalType: "address", name: "seller", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
-      { internalType: "uint256", name: "price", type: "uint256" },
-    ],
-    stateMutability: "view",
     type: "function",
+    name: "bidToken",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+      { name: "_price", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "payable",
   },
   {
-    inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "address", name: "", type: "address" },
-    ],
-    name: "collectionBids",
-    outputs: [
-      { internalType: "address", name: "collection", type: "address" },
-      { internalType: "address", name: "bidder", type: "address" },
-      { internalType: "uint256", name: "quantity", type: "uint256" },
-      { internalType: "uint256", name: "price", type: "uint256" },
-    ],
-    stateMutability: "view",
     type: "function",
+    name: "acceptTokenBid",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_bidder", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
   {
+    type: "function",
+    name: "cancelTokenBid",
     inputs: [
-      { internalType: "address", name: "", type: "address" },
-      { internalType: "uint256", name: "", type: "uint256" },
-      { internalType: "address", name: "", type: "address" },
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
     ],
-    name: "tokenBids",
-    outputs: [
-      { internalType: "address", name: "collection", type: "address" },
-      { internalType: "address", name: "bidder", type: "address" },
-      { internalType: "uint256", name: "tokenId", type: "uint256" },
-      { internalType: "uint256", name: "price", type: "uint256" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "", type: "address" }],
-    name: "royalties",
-    outputs: [
-      { internalType: "uint256", name: "fee", type: "uint256" },
-      { internalType: "address", name: "owner", type: "address" },
-    ],
-    stateMutability: "view",
-    type: "function",
+    outputs: [],
+    stateMutability: "nonpayable",
   },
 
-  { inputs: [], name: "marketplaceFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [], name: "feeReceiver", outputs: [{ internalType: "address", name: "", type: "address" }], stateMutability: "view", type: "function" },
-  { inputs: [], name: "basisPoints", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-  { inputs: [], name: "maxRoyaltyFee", outputs: [{ internalType: "uint256", name: "", type: "uint256" }], stateMutability: "view", type: "function" },
-]
-export const marketplaceEventsAbi = [
+  /* ─────────────── Admin ─────────────── */
+
   {
-    anonymous: false,
+    type: "function",
+    name: "updateRoyalties",
     inputs: [
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: false, internalType: "address", name: "seller", type: "address" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
+      { name: "_collection", type: "address" },
+      { name: "_collectionOwner", type: "address" },
+      { name: "_royalty", type: "uint256" },
     ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateMarketplaceFee",
+    inputs: [{ name: "_newFee", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateFeeReceiver",
+    inputs: [{ name: "_newReceiver", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ─────────────── Events ─────────────── */
+
+  {
+    type: "event",
     name: "ListingCreated",
-    type: "event",
+    inputs: [
+      { indexed: true, name: "id", type: "uint256" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: false, name: "seller", type: "address" },
+      { indexed: false, name: "price", type: "uint256" },
+    ],
   },
   {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: false, internalType: "address", name: "seller", type: "address" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
-    ],
+    type: "event",
     name: "ListingCancelled",
-    type: "event",
+    inputs: [
+      { indexed: true, name: "id", type: "uint256" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: false, name: "seller", type: "address" },
+      { indexed: false, name: "price", type: "uint256" },
+    ],
   },
   {
-    anonymous: false,
-    inputs: [
-      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
-      { indexed: true, internalType: "address", name: "collection", type: "address" },
-      { indexed: true, internalType: "uint256", name: "tokenId", type: "uint256" },
-      { indexed: false, internalType: "address", name: "seller", type: "address" },
-      { indexed: false, internalType: "address", name: "buyer", type: "address" },
-      { indexed: false, internalType: "uint256", name: "price", type: "uint256" },
-      { indexed: false, internalType: "uint256", name: "marketplaceFee", type: "uint256" },
-      { indexed: false, internalType: "uint256", name: "royaltyFee", type: "uint256" },
-    ],
-    name: "ListingSold",
     type: "event",
+    name: "ListingSold",
+    inputs: [
+      { indexed: true, name: "id", type: "uint256" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: false, name: "seller", type: "address" },
+      { indexed: false, name: "buyer", type: "address" },
+      { indexed: false, name: "price", type: "uint256" },
+      { indexed: false, name: "marketplaceFee", type: "uint256" },
+      { indexed: false, name: "royaltyFee", type: "uint256" },
+    ],
   },
-]
+
+  {
+    type: "event",
+    name: "MarketplaceFeeUpdated",
+    inputs: [
+      { indexed: false, name: "oldFee", type: "uint256" },
+      { indexed: false, name: "newFee", type: "uint256" },
+    ],
+  },
+  {
+    type: "event",
+    name: "MarketplaceFeeReceiverUpdated",
+    inputs: [{ indexed: true, name: "receiver", type: "address" }],
+  },
+
+  {
+    type: "receive",
+    stateMutability: "payable",
+  },
+] as const

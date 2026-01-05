@@ -8,7 +8,7 @@ import ListNftWithApproval from "@/components/ListNFT"
 import { FaUser } from "react-icons/fa"
 import { FaShop } from "react-icons/fa6"
 import { SortBy, SortDir } from "@/lib/constants"
-import { useMarketplaceListings } from "@/components/Contract"
+import { useMarketplaceListings, useMarketplaceInfo } from "@/components/Contract"
 import { FaArrowDown } from "react-icons/fa"
 
 export default function Home() {
@@ -18,6 +18,7 @@ export default function Home() {
   const [sortDir, setSortDir] = useState<SortDir>("asc")
 
   const { address } = useAccount()
+  const { totalVolume, totalSales, marketplaceFee, refetchTotalVolume, refetchTotalSales } = useMarketplaceInfo()
   const { data: listings = [], isLoading } = useMarketplaceListings(BigInt("9967517"))
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function Home() {
             className="flex flex-col gap-2 justify-center items-center"
           >
             <Link href="/mint">
-              <button className="py-2 px-4 rounded-4xl mt-3 w-fit flex gap-2 hover:opacity-85 ">
+              <button className="py-2 px-4 rounded-4xl mt-3 w-fit flex gap-2 hover:opacity-85  ">
                 <span>Go to mint</span>
                 <span>&rarr;</span>
               </button>
@@ -55,23 +56,42 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
-      <section className="w-full mt-5 relative py-10">
+      <section className="w-full mt-5 relative py-10 flex flex-col gap-4">
+        <div className="flex items-center justify-start w-full gap-4 text-(--accent) opacity-75 font-bold">
+          <div>
+            <span className="  text-(--accent)/75">Total volume: </span>
+            {(Number(totalVolume) / 1e18).toFixed(2) + " ETH"}
+          </div>
+
+          <div>
+            <span className="  text-(--accent)/75">Total sales: </span>
+            {Number(totalSales)}
+          </div>
+          <div>
+            <span className="  text-(--accent)/75">Marketplace fee: </span>
+            {Number(marketplaceFee) / 100 + "%"}
+          </div>
+        </div>
         <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full">
           <div className="border-b border-(--accent)/50">
             <div className="flex justify-between items-center">
               <div className="flex">
                 <button
                   onClick={() => setPageCard("marketplace")}
-                  className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-50! bg-transparent!  " + (pageCard == "marketplace" ? " opacity-50" : "")}
+                  className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "marketplace" ? " " : "opacity-50")}
                 >
                   <FaShop />
                   <span className="hidden md:block">Marketplace</span>
                 </button>
-                <button onClick={() => setPageCard("user")} className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-50! bg-transparent!  " + (pageCard == "user" ? " opacity-50" : "")}>
+                <button
+                  onClick={() => setPageCard("user")}
+                  className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "user" ? " " : "opacity-50")}
+                >
                   <FaUser />
                   <span className="hidden md:block">Items</span>
                 </button>
               </div>
+
               <div className="flex ">
                 <button
                   onClick={() => {
@@ -111,12 +131,12 @@ export default function Home() {
           <div className="p-4 bg-(--accent)/20">
             {pageCard == "marketplace" && (
               <div>
-                <ListedNFTS listings={listings} userListings={userListings} sortBy={sortBy} sortDir={sortDir} />
+                <ListedNFTS listings={listings} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={refetchTotalSales} refetchTotalVolume={refetchTotalVolume} />
               </div>
             )}
             {pageCard == "user" && (
               <div>
-                <ListNftWithApproval listings={[]} userListings={userListings} sortBy={sortBy} sortDir={sortDir} />
+                <ListNftWithApproval listings={[]} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={{}} refetchTotalVolume={{}} />
               </div>
             )}
           </div>

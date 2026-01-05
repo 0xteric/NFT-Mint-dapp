@@ -11,7 +11,7 @@ import { ListedNFTSProps, TxState, SortBy, SortDir } from "@/lib/constants"
 import { FaUser, FaLink } from "react-icons/fa"
 import { useQueryClient } from "@tanstack/react-query"
 
-export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProps) {
+export default function ListedNFTS({ listings, sortBy, sortDir, refetchTotalSales, refetchTotalVolume }: ListedNFTSProps) {
   const queryClient = useQueryClient()
   const publicClient = usePublicClient()
   const { address } = useAccount()
@@ -55,6 +55,8 @@ export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProp
       setTimeout(() => {
         setTx(tokenId, { txStatus: "idle" })
         queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] })
+        refetchTotalSales()
+        refetchTotalVolume()
       }, 3500)
     } catch (e: any) {
       if (e?.shortMessage === "User rejected the request.") {
@@ -122,7 +124,7 @@ export default function ListedNFTS({ listings, sortBy, sortDir }: ListedNFTSProp
 
           return (
             <AnimatePresence key={nft.id}>
-              <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.1, delay: idx * 0.1 }}>
+              <motion.div initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.3, delay: idx * 0.1 }}>
                 <div className="relative hover:scale-103 hover:cursor-pointer transition-all duration-300 aspect-square bg-(--accent)  w-full h-full text-white flex flex-col justify-end  rounded gap-2 ">
                   <button
                     id="buy-btn"

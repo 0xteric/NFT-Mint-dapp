@@ -42,6 +42,8 @@ export type ListedNFTSProps = {
   userListings: ListedNft[]
   sortBy: SortBy
   sortDir: SortDir
+  refetchTotalVolume: any
+  refetchTotalSales: any
 }
 
 export type SortBy = "id" | "price"
