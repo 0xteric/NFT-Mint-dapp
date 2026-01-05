@@ -122,19 +122,17 @@ export function useMarketplaceInfo() {
     functionName: "totalVolume",
   })
 
-  console.log(marketplaceFee, feeReceiver, totalListings, totalSales, totalVolume, refetchTotalSales, refetchTotalVolume)
-
   return { marketplaceFee, feeReceiver, totalListings, totalSales, totalVolume, refetchTotalSales, refetchTotalVolume }
 }
 
-export function useMarketplaceListings(fromBlock: bigint) {
+export function useMarketplaceIndex(fromBlock: bigint) {
   const publicClient = usePublicClient()
 
   return useQuery({
-    queryKey: ["marketplace-listings"],
+    queryKey: ["marketplace-index"],
     queryFn: async () => {
-      const listings = await indexMarketplace(publicClient, fromBlock)
-      return listings.filter((l) => l.status === "ACTIVE")
+      const { listings, tokenBids } = await indexMarketplace(publicClient, fromBlock)
+      return { listings: listings.filter((l) => l.status === "ACTIVE"), tokenBids: tokenBids.filter((l) => l.status === "ACTIVE") }
     },
     staleTime: 30_000, // 30s
     refetchOnWindowFocus: false,
@@ -198,12 +196,12 @@ export function useBuy() {
 export function useBidToken() {
   const { writeContractAsync } = useWriteContract()
 
-  const bidToken = async (collection: `0x${string}`, tokenId: number, price: bigint) => {
+  const bidToken = async (tokenId: bigint, price: bigint) => {
     const txHash = await writeContractAsync({
       address: MARKETPLACE_CONTRACT_ADDRESS,
       abi: marketplaceAbi,
       functionName: "bidToken",
-      args: [collection, BigInt(tokenId), price],
+      args: [MARKETPLACE_CONTRACT_ADDRESS, tokenId, price],
       value: price,
     })
     return txHash
@@ -247,12 +245,12 @@ export function useAcceptTokenBid() {
 export function useBidCollection() {
   const { writeContractAsync } = useWriteContract()
 
-  const bidCollection = async (collection: `0x${string}`, price: bigint, quantity: number) => {
+  const bidCollection = async (price: bigint, quantity: number) => {
     const txHash = await writeContractAsync({
       address: MARKETPLACE_CONTRACT_ADDRESS,
       abi: marketplaceAbi,
       functionName: "bidCollection",
-      args: [collection, price, BigInt(quantity)],
+      args: [MARKETPLACE_CONTRACT_ADDRESS, price, BigInt(quantity)],
       value: price * BigInt(quantity),
     })
     return txHash

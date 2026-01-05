@@ -340,7 +340,64 @@ export const marketplaceAbi = [
       { indexed: false, name: "royaltyFee", type: "uint256" },
     ],
   },
-
+  {
+    type: "event",
+    name: "CollectionBidCreated",
+    inputs: [
+      { indexed: true, name: "bidder", type: "address" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: false, name: "quantity", type: "uint256" },
+      { indexed: false, name: "price", type: "uint256" },
+    ],
+  },
+  {
+    type: "event",
+    name: "CollectionBidCancelled",
+    inputs: [
+      { indexed: true, name: "bidder", type: "address" },
+      { indexed: true, name: "collection", type: "address" },
+    ],
+  },
+  {
+    type: "event",
+    name: "TokenBidCreated",
+    inputs: [
+      { indexed: true, name: "bidder", type: "address" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: false, name: "price", type: "uint256" },
+    ],
+  },
+  {
+    type: "event",
+    name: "TokenBidCancelled",
+    inputs: [
+      { indexed: true, name: "bidder", type: "address" },
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+    ],
+  },
+  {
+    type: "event",
+    name: "BidSold",
+    inputs: [
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: true, name: "tokenId", type: "uint256" },
+      { indexed: true, name: "seller", type: "address" },
+      { indexed: false, name: "buyer", type: "address" },
+      { indexed: false, name: "price", type: "uint256" },
+      { indexed: false, name: "marketplaceFee", type: "uint256" },
+      { indexed: false, name: "royaltyFee", type: "uint256" },
+    ],
+  },
+  {
+    type: "event",
+    name: "RoyaltiesUpdated",
+    inputs: [
+      { indexed: true, name: "collection", type: "address" },
+      { indexed: false, name: "fee", type: "uint256" },
+    ],
+  },
   {
     type: "event",
     name: "MarketplaceFeeUpdated",

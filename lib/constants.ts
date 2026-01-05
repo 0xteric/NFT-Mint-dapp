@@ -35,6 +35,7 @@ export type UserNft = {
 export type TxState = {
   txHash?: string
   txStatus: "idle" | "waiting" | "loading" | "success" | "error"
+  action: "list" | "delist" | "buy" | "bidToken" | "cancelTokenBid" | "bidCollection" | "cancelCollectionBid" | "approve" | "none"
 }
 
 export type ListedNFTSProps = {

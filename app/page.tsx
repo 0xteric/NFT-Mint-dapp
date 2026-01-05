@@ -8,24 +8,48 @@ import ListNftWithApproval from "@/components/ListNFT"
 import { FaUser } from "react-icons/fa"
 import { FaShop } from "react-icons/fa6"
 import { SortBy, SortDir } from "@/lib/constants"
-import { useMarketplaceListings, useMarketplaceInfo } from "@/components/Contract"
+import { useMarketplaceIndex, useMarketplaceInfo, useBidCollection } from "@/components/Contract"
 import { FaArrowDown } from "react-icons/fa"
+import { TbHammer } from "react-icons/tb"
+import { IoClose } from "react-icons/io5"
+import { parseEther } from "viem"
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [pageCard, setPageCard] = useState("marketplace")
   const [sortBy, setSortBy] = useState<SortBy>("price")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [bidCollectionDiv, setBidCollectionDiv] = useState<boolean>(false)
+  const [collectionBidAmount, setCollectionBidAmount] = useState<number>()
+  const [collectionBidPrice, setCollectionBidPrice] = useState<number>()
 
   const { address } = useAccount()
   const { totalVolume, totalSales, marketplaceFee, refetchTotalVolume, refetchTotalSales } = useMarketplaceInfo()
-  const { data: listings = [], isLoading } = useMarketplaceListings(BigInt("9967517"))
-
+  const { data: marketplace = { listings: [], tokenBids: [] }, isLoading } = useMarketplaceIndex(BigInt("9967517"))
+  const { bidCollection } = useBidCollection()
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  const userListings = useMemo(() => listings.filter((l) => l.seller.toLowerCase() === address?.toLowerCase()), [listings, address])
+  useEffect(() => {
+    console.log(marketplace.tokenBids)
+  }, [marketplace.tokenBids.length])
+
+  const userListings = useMemo(() => marketplace.listings.filter((l) => l.seller.toLowerCase() === address?.toLowerCase()), [marketplace.listings, address])
+
+  const handleBidCollection = async () => {
+    console.log("bid1")
+    if (collectionBidPrice && collectionBidAmount && !(collectionBidPrice > 0) && !(collectionBidAmount > 0)) return
+    console.log("bid2")
+    const hash = await bidCollection(parseEther(Number(collectionBidPrice).toString()), Number(collectionBidAmount))
+  }
+  const handleClose = (event: any) => {
+    if (event.target.id === "bcd_bg") {
+      setBidCollectionDiv(false)
+      setCollectionBidAmount(undefined)
+      setCollectionBidPrice(undefined)
+    }
+  }
 
   return (
     <div className="flex flex-col items-center justify-center gap-4 font-sans w-full  text-center  ">
@@ -90,9 +114,7 @@ export default function Home() {
                   <FaUser />
                   <span className="hidden md:block">Items</span>
                 </button>
-              </div>
-
-              <div className="flex ">
+                <div className="border-l border-(--accent)/20"></div>
                 <button
                   onClick={() => {
                     setSortBy("price")
@@ -125,13 +147,28 @@ export default function Home() {
                     `}
                   />
                 </button>
+                <div className="border-l border-(--accent)/20"></div>
+              </div>
+
+              <div className="flex border-l border-(--accent)/20 ">
+                <button onClick={() => setBidCollectionDiv(true)} className=" p-5 md:p-4 bg-transparent! flex items-center gap-2 text-(--accent)! ">
+                  <TbHammer />
+                  <span className="md:block hidden">Place collection bid</span>
+                </button>
               </div>
             </div>
           </div>
           <div className="p-4 bg-(--accent)/20">
             {pageCard == "marketplace" && (
               <div>
-                <ListedNFTS listings={listings} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={refetchTotalSales} refetchTotalVolume={refetchTotalVolume} />
+                <ListedNFTS
+                  listings={marketplace.listings}
+                  userListings={userListings}
+                  sortBy={sortBy}
+                  sortDir={sortDir}
+                  refetchTotalSales={refetchTotalSales}
+                  refetchTotalVolume={refetchTotalVolume}
+                />
               </div>
             )}
             {pageCard == "user" && (
@@ -142,6 +179,37 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {bidCollectionDiv && (
+        <div id="bcd_bg" onClick={handleClose} className="top-0 bg-black/25 absolute w-screen h-full  flex items-center gap-2 text-(--accent)! justify-center z-200">
+          <div className="card rounded">
+            <div className="flex w-full justify-between  ">
+              <div className="p-4 flex gap-4 text-(--accent)/80 items-center">
+                <TbHammer className="text-2xl " />
+                <h2 className=" text-xl">Place collection bid</h2>
+              </div>
+
+              <button onClick={() => setBidCollectionDiv(false)} className=" p-4  bg-transparent! flex items-center gap-2 text-(--accent)! ">
+                <IoClose />
+              </button>
+            </div>
+            <div className="p-4 flex flex-col">
+              <div className="flex  gap-2 items-center justify-center rounded border border-(--accent)/50 bg-(--accent)/30 overflow-hidden">
+                <div className="p-4 flex gap-2 items-center">
+                  <span className="font-bold ">Price: </span>
+                  <input type="number" value={collectionBidPrice} onChange={(e: any) => setCollectionBidPrice(e.target.value)} placeholder="0.0 ETH" className=" bg-transparent! w-20" />
+                </div>
+                <div className="py-4 flex gap-2 items-center">
+                  <span className="font-bold ">Amount: </span>
+                  <input type="number" value={collectionBidAmount} onChange={(e: any) => setCollectionBidAmount(e.target.value)} placeholder="0" className="w-10 bg-transparent!" />
+                </div>
+                <button onClick={handleBidCollection} className="p-4 px-6 border-l border-(--accent)/50 flex items-center gap-2 ">
+                  Bid
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

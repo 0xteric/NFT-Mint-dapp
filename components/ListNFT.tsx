@@ -55,7 +55,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
     setTxMap((prev) => ({
       ...prev,
       [key]: {
-        ...(prev[key] ?? { txStatus: "idle" }),
+        ...(prev[key] ?? { txStatus: "idle", action: "none" }),
         ...patch,
       },
     }))
@@ -77,7 +77,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
 
   const approveCollection = async (id: bigint) => {
     if (!collection) return
-    setTx(id, { txStatus: "waiting" })
+    setTx(id, { txStatus: "waiting", action: "approve" })
 
     try {
       const hash = await writeContractAsync({
@@ -97,12 +97,12 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
 
       setTimeout(async () => {
         await refetch()
-        setTx(id, { txStatus: "idle" })
+        setTx(id, { txStatus: "idle", action: "none" })
       }, 3500)
     } catch (e) {
       setTx(id, { txStatus: "error" })
       setTimeout(() => {
-        setTx(id, { txStatus: "idle" })
+        setTx(id, { txStatus: "idle", action: "none" })
       }, 3500)
     }
   }
@@ -110,7 +110,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
   const handleList = async (e: any, id: bigint) => {
     if (!collection || tokenId === "" || Number(price) <= 0) return
     if (e.target.id == "input-price") return
-    setTx(id, { txStatus: "waiting" })
+    setTx(id, { txStatus: "waiting", action: "list" })
     try {
       const _price = parseEther(String(price))
       const hash = await list(Number(id), _price)
@@ -125,7 +125,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
         if (!loadingQueryRef.current) {
           loadingQueryRef.current = true
 
-          await queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] })
+          await queryClient.invalidateQueries({ queryKey: ["marketplace-index"] })
           await queryClient.invalidateQueries({ queryKey: ["user-tokens", address] })
 
           setTimeout(() => {
@@ -135,14 +135,14 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
 
         setTokenProp(id, "listed", true)
         setTokenProp(id, "price", _price)
-        setTx(id, { txStatus: "idle", txHash: undefined })
+        setTx(id, { txStatus: "idle", txHash: undefined, action: "none" })
         setTokenId("")
         setPrice("")
       }, 3500)
     } catch (e) {
       setTx(id, { txStatus: "error" })
       setTimeout(() => {
-        setTx(id, { txStatus: "idle", txHash: undefined })
+        setTx(id, { txStatus: "idle", txHash: undefined, action: "none" })
         setTokenId("")
         setPrice("")
       }, 3500)
@@ -165,7 +165,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
         if (!loadingQueryRef.current) {
           loadingQueryRef.current = true
 
-          await queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] })
+          await queryClient.invalidateQueries({ queryKey: ["marketplace-index"] })
           await queryClient.invalidateQueries({ queryKey: ["user-tokens", address] })
 
           setTimeout(() => {
