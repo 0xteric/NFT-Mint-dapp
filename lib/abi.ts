@@ -95,60 +95,180 @@ export const marketplaceAbi = [
   {
     type: "constructor",
     inputs: [
-      {
-        name: "_initialFee",
-        type: "uint256",
-      },
+      { name: "_bids", type: "address" },
+      { name: "_core", type: "address" },
+      { name: "_payments", type: "address" },
     ],
     stateMutability: "nonpayable",
   },
 
-  /* ─────────────── Views ─────────────── */
+  /* ========= GETTERS ========= */
 
   {
     type: "function",
-    name: "isListed",
+    name: "bids",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "core",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "payments",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+
+  /* ========= ADMIN ========= */
+
+  {
+    type: "function",
+    name: "updateMarketplaceFee",
+    inputs: [{ name: "_newFee", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateFeeReceiver",
+    inputs: [{ name: "_newReceiver", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "switchRequireOwnable",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateCollectionRoyalties",
     inputs: [
-      { name: "collection", type: "address" },
-      { name: "tokenId", type: "uint256" },
+      { name: "_collection", type: "address" },
+      { name: "_newReceiver", type: "address" },
+      { name: "_newRoyalty", type: "uint256" },
     ],
-    outputs: [{ type: "bool" }],
-    stateMutability: "view",
+    outputs: [],
+    stateMutability: "nonpayable",
   },
+  {
+    type: "function",
+    name: "updatePayments",
+    inputs: [{ name: "_newAddress", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateCore",
+    inputs: [{ name: "_newAddress", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "updateBids",
+    inputs: [{ name: "_newAddress", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= EVENTS ========= */
+
+  {
+    type: "event",
+    name: "MarketplaceFeeUpdated",
+    inputs: [
+      { name: "oldFee", type: "uint256", indexed: false },
+      { name: "newFee", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "MarketplaceFeeReceiverUpdated",
+    inputs: [{ name: "newReceiver", type: "address", indexed: false }],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "RoyaltiesUpdated",
+    inputs: [
+      { name: "collection", type: "address", indexed: false },
+      { name: "newRoyalty", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+
+  /* ========= OWNABLE ========= */
 
   {
     type: "function",
-    name: "nextListingId",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
+    name: "transferOwnership",
+    inputs: [{ name: "newOwner", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
-    name: "marketplaceFee",
+    name: "renounceOwnership",
     inputs: [],
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
+    outputs: [],
+    stateMutability: "nonpayable",
   },
   {
-    type: "function",
-    name: "basisPoints",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
-    stateMutability: "view",
+    type: "event",
+    name: "OwnershipTransferred",
+    inputs: [
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
+    ],
+    anonymous: false,
   },
+
+  /* ========= FALLBACKS ========= */
+
+  {
+    type: "receive",
+    stateMutability: "payable",
+  },
+  {
+    type: "fallback",
+    stateMutability: "payable",
+  },
+] as const
+
+export const marketplaceCoreABI = [
+  /* ========= CONSTRUCTOR ========= */
+  {
+    type: "constructor",
+    inputs: [{ name: "_payments", type: "address" }],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= CONSTANTS / STORAGE ========= */
+
   {
     type: "function",
     name: "maxRoyaltyFee",
     inputs: [],
     outputs: [{ type: "uint256" }],
-    stateMutability: "view",
-  },
-  {
-    type: "function",
-    name: "feeReceiver",
-    inputs: [],
-    outputs: [{ type: "address" }],
     stateMutability: "view",
   },
   {
@@ -172,8 +292,139 @@ export const marketplaceAbi = [
     outputs: [{ type: "uint256" }],
     stateMutability: "view",
   },
+  {
+    type: "function",
+    name: "nextListingId",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "marketplace",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "bidsModule",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "payments",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
 
-  /* ─────────────── Listings ─────────────── */
+  /* ========= ARRAYS ========= */
+
+  {
+    type: "function",
+    name: "registeredCollections",
+    inputs: [{ name: "", type: "uint256" }],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+
+  /* ========= MAPPINGS ========= */
+
+  {
+    type: "function",
+    name: "collections",
+    inputs: [{ name: "", type: "address" }],
+    outputs: [
+      { name: "collection", type: "address" },
+      { name: "royaltyReceiver", type: "address" },
+      { name: "royaltyFee", type: "uint256" },
+      { name: "totalVolume", type: "uint256" },
+      { name: "totalSales", type: "uint256" },
+      { name: "exists", type: "bool" },
+    ],
+    stateMutability: "view",
+  },
+
+  {
+    type: "function",
+    name: "listings",
+    inputs: [
+      { name: "", type: "address" },
+      { name: "", type: "uint256" },
+    ],
+    outputs: [
+      { name: "id", type: "uint256" },
+      { name: "seller", type: "address" },
+      { name: "price", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+
+  /* ========= ADMIN ========= */
+
+  {
+    type: "function",
+    name: "setBidsModule",
+    inputs: [{ name: "_bidsModule", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setMarketplace",
+    inputs: [{ name: "_marketplace", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "setPayments",
+    inputs: [{ name: "_payments", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= CORE LOGIC ========= */
+
+  {
+    type: "function",
+    name: "distributePayments",
+    inputs: [
+      { name: "_price", type: "uint256" },
+      { name: "_royaltyReceiver", type: "address" },
+      { name: "_royaltyFee", type: "uint256" },
+      { name: "_to", type: "address" },
+      { name: "_col", type: "address" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "registerCollection",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_royaltyFee", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "setCollectionRoyalty",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_receiver", type: "address" },
+      { name: "_fee", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
 
   {
     type: "function",
@@ -186,6 +437,19 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+
+  {
+    type: "function",
+    name: "listBatch",
+    inputs: [
+      { name: "_collections", type: "address[]" },
+      { name: "_tokenIds", type: "uint256[]" },
+      { name: "_prices", type: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
   {
     type: "function",
     name: "cancelList",
@@ -196,6 +460,29 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+
+  {
+    type: "function",
+    name: "cancelListBatch",
+    inputs: [
+      { name: "_collections", type: "address[]" },
+      { name: "_tokenIds", type: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "removeListing",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenId", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
   {
     type: "function",
     name: "buy",
@@ -207,7 +494,165 @@ export const marketplaceAbi = [
     stateMutability: "payable",
   },
 
-  /* ─────────────── Collection Bids ─────────────── */
+  {
+    type: "function",
+    name: "buyBatch",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenIds", type: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+  },
+
+  /* ========= EVENTS ========= */
+
+  {
+    type: "event",
+    name: "CollectionRegistered",
+    inputs: [
+      { name: "collection", type: "address", indexed: true },
+      { name: "owner", type: "address", indexed: true },
+      { name: "royaltyFee", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ListingCreated",
+    inputs: [
+      { name: "id", type: "uint256", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "seller", type: "address", indexed: false },
+      { name: "price", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ListingCancelled",
+    inputs: [
+      { name: "id", type: "uint256", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "seller", type: "address", indexed: false },
+      { name: "price", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "ListingSold",
+    inputs: [
+      { name: "id", type: "uint256", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "seller", type: "address", indexed: false },
+      { name: "buyer", type: "address", indexed: false },
+      { name: "price", type: "uint256", indexed: false },
+      { name: "marketplaceFee", type: "uint256", indexed: false },
+      { name: "royaltyFee", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+
+  /* ========= OWNABLE ========= */
+
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "transferOwnership",
+    inputs: [{ name: "newOwner", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "renounceOwnership",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "event",
+    name: "OwnershipTransferred",
+    inputs: [
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
+    ],
+    anonymous: false,
+  },
+] as const
+
+export const bidsABI = [
+  /* ========= CONSTRUCTOR ========= */
+  {
+    type: "constructor",
+    inputs: [{ name: "_core", type: "address" }],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= STORAGE ========= */
+
+  {
+    type: "function",
+    name: "core",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+
+  /* ========= MAPPINGS ========= */
+
+  {
+    type: "function",
+    name: "collectionBids",
+    inputs: [
+      { name: "", type: "address" },
+      { name: "", type: "address" },
+    ],
+    outputs: [
+      { name: "bidder", type: "address" },
+      { name: "quantity", type: "uint256" },
+      { name: "price", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+
+  {
+    type: "function",
+    name: "tokenBids",
+    inputs: [
+      { name: "", type: "address" },
+      { name: "", type: "uint256" },
+      { name: "", type: "address" },
+    ],
+    outputs: [
+      { name: "bidder", type: "address" },
+      { name: "tokenId", type: "uint256" },
+      { name: "price", type: "uint256" },
+    ],
+    stateMutability: "view",
+  },
+
+  /* ========= ADMIN ========= */
+
+  {
+    type: "function",
+    name: "setCore",
+    inputs: [{ name: "_core", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= COLLECTION BIDS ========= */
 
   {
     type: "function",
@@ -220,6 +665,7 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "payable",
   },
+
   {
     type: "function",
     name: "cancelCollectionBid",
@@ -227,6 +673,7 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+
   {
     type: "function",
     name: "acceptCollectionBid",
@@ -239,7 +686,7 @@ export const marketplaceAbi = [
     stateMutability: "nonpayable",
   },
 
-  /* ─────────────── Token Bids ─────────────── */
+  /* ========= TOKEN BIDS ========= */
 
   {
     type: "function",
@@ -252,6 +699,19 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "payable",
   },
+
+  {
+    type: "function",
+    name: "bidTokenBatch",
+    inputs: [
+      { name: "_collection", type: "address" },
+      { name: "_tokenIds", type: "uint256[]" },
+      { name: "_prices", type: "uint256[]" },
+    ],
+    outputs: [],
+    stateMutability: "payable",
+  },
+
   {
     type: "function",
     name: "acceptTokenBid",
@@ -263,6 +723,7 @@ export const marketplaceAbi = [
     outputs: [],
     stateMutability: "nonpayable",
   },
+
   {
     type: "function",
     name: "cancelTokenBid",
@@ -274,146 +735,223 @@ export const marketplaceAbi = [
     stateMutability: "nonpayable",
   },
 
-  /* ─────────────── Admin ─────────────── */
-
   {
     type: "function",
-    name: "updateRoyalties",
+    name: "cancelTokenBidBatch",
     inputs: [
-      { name: "_collection", type: "address" },
-      { name: "_collectionOwner", type: "address" },
-      { name: "_royalty", type: "uint256" },
+      { name: "_collections", type: "address[]" },
+      { name: "_tokenIds", type: "uint256[]" },
     ],
     outputs: [],
     stateMutability: "nonpayable",
   },
-  {
-    type: "function",
-    name: "updateMarketplaceFee",
-    inputs: [{ name: "_newFee", type: "uint256" }],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
-  {
-    type: "function",
-    name: "updateFeeReceiver",
-    inputs: [{ name: "_newReceiver", type: "address" }],
-    outputs: [],
-    stateMutability: "nonpayable",
-  },
 
-  /* ─────────────── Events ─────────────── */
+  /* ========= EVENTS ========= */
 
-  {
-    type: "event",
-    name: "ListingCreated",
-    inputs: [
-      { indexed: true, name: "id", type: "uint256" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
-      { indexed: false, name: "seller", type: "address" },
-      { indexed: false, name: "price", type: "uint256" },
-    ],
-  },
-  {
-    type: "event",
-    name: "ListingCancelled",
-    inputs: [
-      { indexed: true, name: "id", type: "uint256" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
-      { indexed: false, name: "seller", type: "address" },
-      { indexed: false, name: "price", type: "uint256" },
-    ],
-  },
-  {
-    type: "event",
-    name: "ListingSold",
-    inputs: [
-      { indexed: true, name: "id", type: "uint256" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
-      { indexed: false, name: "seller", type: "address" },
-      { indexed: false, name: "buyer", type: "address" },
-      { indexed: false, name: "price", type: "uint256" },
-      { indexed: false, name: "marketplaceFee", type: "uint256" },
-      { indexed: false, name: "royaltyFee", type: "uint256" },
-    ],
-  },
   {
     type: "event",
     name: "CollectionBidCreated",
     inputs: [
-      { indexed: true, name: "bidder", type: "address" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: false, name: "quantity", type: "uint256" },
-      { indexed: false, name: "price", type: "uint256" },
+      { name: "bidder", type: "address", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "quantity", type: "uint256", indexed: false },
+      { name: "price", type: "uint256", indexed: false },
     ],
+    anonymous: false,
   },
   {
     type: "event",
     name: "CollectionBidCancelled",
     inputs: [
-      { indexed: true, name: "bidder", type: "address" },
-      { indexed: true, name: "collection", type: "address" },
+      { name: "bidder", type: "address", indexed: true },
+      { name: "collection", type: "address", indexed: true },
     ],
+    anonymous: false,
   },
   {
     type: "event",
     name: "TokenBidCreated",
     inputs: [
-      { indexed: true, name: "bidder", type: "address" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
-      { indexed: false, name: "price", type: "uint256" },
+      { name: "bidder", type: "address", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "price", type: "uint256", indexed: false },
     ],
+    anonymous: false,
   },
   {
     type: "event",
     name: "TokenBidCancelled",
     inputs: [
-      { indexed: true, name: "bidder", type: "address" },
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
+      { name: "bidder", type: "address", indexed: true },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
     ],
+    anonymous: false,
   },
   {
     type: "event",
     name: "BidSold",
     inputs: [
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: true, name: "tokenId", type: "uint256" },
-      { indexed: true, name: "seller", type: "address" },
-      { indexed: false, name: "buyer", type: "address" },
-      { indexed: false, name: "price", type: "uint256" },
-      { indexed: false, name: "marketplaceFee", type: "uint256" },
-      { indexed: false, name: "royaltyFee", type: "uint256" },
+      { name: "collection", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "seller", type: "address", indexed: false },
+      { name: "buyer", type: "address", indexed: false },
+      { name: "price", type: "uint256", indexed: false },
+      { name: "marketplaceFee", type: "uint256", indexed: false },
+      { name: "royaltyFee", type: "uint256", indexed: false },
     ],
+    anonymous: false,
+  },
+
+  /* ========= OWNABLE ========= */
+
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "transferOwnership",
+    inputs: [{ name: "newOwner", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "renounceOwnership",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
   },
   {
     type: "event",
-    name: "RoyaltiesUpdated",
+    name: "OwnershipTransferred",
     inputs: [
-      { indexed: true, name: "collection", type: "address" },
-      { indexed: false, name: "fee", type: "uint256" },
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
     ],
+    anonymous: false,
   },
+] as const
+
+export const paymentsABI = [
+  /* ========= CONSTRUCTOR ========= */
   {
-    type: "event",
-    name: "MarketplaceFeeUpdated",
-    inputs: [
-      { indexed: false, name: "oldFee", type: "uint256" },
-      { indexed: false, name: "newFee", type: "uint256" },
-    ],
+    type: "constructor",
+    inputs: [{ name: "_marketplaceFee", type: "uint256" }],
+    stateMutability: "nonpayable",
   },
+
+  /* ========= CONSTANTS / STORAGE ========= */
+
   {
-    type: "event",
-    name: "MarketplaceFeeReceiverUpdated",
-    inputs: [{ indexed: true, name: "receiver", type: "address" }],
+    type: "function",
+    name: "basisPoints",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
   },
 
   {
-    type: "receive",
-    stateMutability: "payable",
+    type: "function",
+    name: "feeReceiver",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+
+  {
+    type: "function",
+    name: "marketplaceFee",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+    stateMutability: "view",
+  },
+
+  {
+    type: "function",
+    name: "core",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+
+  /* ========= ADMIN ========= */
+
+  {
+    type: "function",
+    name: "setCore",
+    inputs: [{ name: "_core", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "_updateMarketplaceFee",
+    inputs: [{ name: "_newFee", type: "uint256" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "function",
+    name: "_updateFeeReceiver",
+    inputs: [{ name: "_newReceiver", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= PAYMENTS ========= */
+
+  {
+    type: "function",
+    name: "_distributePayments",
+    inputs: [
+      { name: "_price", type: "uint256" },
+      { name: "_royaltyReceiver", type: "address" },
+      { name: "_royaltyFee", type: "uint256" },
+      { name: "_to", type: "address" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  /* ========= OWNABLE ========= */
+
+  {
+    type: "function",
+    name: "owner",
+    inputs: [],
+    outputs: [{ type: "address" }],
+    stateMutability: "view",
+  },
+  {
+    type: "function",
+    name: "transferOwnership",
+    inputs: [{ name: "newOwner", type: "address" }],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+  {
+    type: "function",
+    name: "renounceOwnership",
+    inputs: [],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+
+  {
+    type: "event",
+    name: "OwnershipTransferred",
+    inputs: [
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
+    ],
+    anonymous: false,
   },
 ] as const

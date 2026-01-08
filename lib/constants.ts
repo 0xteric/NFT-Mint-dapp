@@ -1,5 +1,16 @@
+import type { Metadata } from "next"
+import { Address } from "viem"
+
 export const NFT_CONTRACT_ADDRESS = "0x1C7607fa0a271605bdc2293B2b9E589e71D9c9e8"
-export const MARKETPLACE_CONTRACT_ADDRESS = "0x48dDcBC2465e7003D9BFbDD0b0C88e3e0Fde58Ff"
+export const MARKETPLACE_CONTRACT_ADDRESS = "0xbeAaD8c417f69c8a9e0adf26De34a80d8AEfEfD1"
+export const CORE_CONTRACT_ADDRESS = "0x1F82e2C53B688C49B653C80F5EF0316D18d43Be3"
+export const PAYMENTS_CONTRACT_ADDRESS = "0xd786e716e33D673B17511f12C743a18cf623f6E2"
+export const BIDS_CONTRACT_ADDRESS = "0x6FeE331c6D71CE5eFc653613da9713C6B50c602A"
+
+export const metadata: Metadata = {
+  title: "SUP!",
+  description: "Created by Fractalio",
+}
 
 export type IndexedListing = {
   id: bigint
@@ -28,8 +39,10 @@ export type ListedNft = {
 
 export type UserNft = {
   id: bigint
+  collection: Address
   price: bigint
   listed: boolean
+  name: string
 }
 
 export type TxState = {
@@ -45,6 +58,7 @@ export type ListedNFTSProps = {
   sortDir: SortDir
   refetchTotalVolume: any
   refetchTotalSales: any
+  collections: any[]
 }
 
 export type SortBy = "id" | "price"

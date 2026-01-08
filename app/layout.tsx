@@ -1,9 +1,10 @@
-import type { Metadata } from "next"
+"use client"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
 import Header from "@/components/Header"
 import { ThemeProvider } from "next-themes"
+import { MarketplaceDataProvider } from "./context/MarketplaceContext"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,11 +15,6 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 })
-
-export const metadata: Metadata = {
-  title: "SUP!",
-  description: "Created by Fractalio",
-}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -32,15 +28,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             "
           >
             <Providers>
-              <Header />
-              <main
-                className=" 
+              <MarketplaceDataProvider>
+                <Header />
+                <main
+                  className=" 
                  p-5            flex flex-col
                items-center justify-center"
-              >
-                {children}
-              </main>
-              <footer className="p-2 text-xs mt-auto text-center">Built with Next.js, Wagmi, Viem & Foundry</footer>
+                >
+                  {children}
+                </main>
+                <footer className="p-2 text-xs mt-auto text-center">Built with Next.js, Wagmi, Viem & Foundry</footer>
+              </MarketplaceDataProvider>
             </Providers>
           </div>
         </ThemeProvider>

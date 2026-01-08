@@ -59,8 +59,8 @@ export default function Header() {
                       <Link href="/" className={linkClass("/")}>
                         HOME
                       </Link>
-                      <Link href="/mint" className={linkClass("/mint")}>
-                        MINT
+                      <Link href="/launchpad" className={linkClass("/launchpad")}>
+                        LAUNCHPAD
                       </Link>
                     </nav>
                     <div className="border-t opacity-30"></div>
@@ -84,8 +84,8 @@ export default function Header() {
             <Link href="/" className={linkClass("/")}>
               HOME
             </Link>
-            <Link href="/mint" className={linkClass("/mint")}>
-              MINT
+            <Link href="/launchpad" className={linkClass("/launchpad")}>
+              LAUNCHPAD
             </Link>
           </nav>
           <h1 className="text-xl font-bold justify-center flex flex-1 p-1.25">SUP!</h1>

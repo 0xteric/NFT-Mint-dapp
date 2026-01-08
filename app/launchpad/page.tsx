@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useEffect, useState } from "react"
 import { FiInfo } from "react-icons/fi"
 import HowItWorks from "@/components/HowItWorks"
+import { RegisterCollection } from "@/components/RegisterCollection"
 
 export default function MintPage() {
   const [mounted, setMounted] = useState(false)
@@ -26,6 +27,9 @@ export default function MintPage() {
           transition={{ duration: 0.3 }}
           className="flex w-full flex-col flex-1 relative "
         >
+          <div>
+            <RegisterCollection />
+          </div>
           <div>
             <div className="flex justify-end mb-5 ">
               <button onClick={() => setShowInfo(true)} className="bg-transparent! text-(--accent)!">

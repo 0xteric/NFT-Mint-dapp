@@ -8,11 +8,13 @@ import ListNftWithApproval from "@/components/ListNFT"
 import { FaUser } from "react-icons/fa"
 import { FaShop } from "react-icons/fa6"
 import { SortBy, SortDir } from "@/lib/constants"
-import { useMarketplaceIndex, useMarketplaceInfo, useBidCollection } from "@/components/Contract"
+import { useBidCollection } from "@/components/Contract"
 import { FaArrowDown } from "react-icons/fa"
 import { TbHammer } from "react-icons/tb"
 import { IoClose } from "react-icons/io5"
 import { parseEther } from "viem"
+import { useMarketplace } from "@/app/context/MarketplaceContext"
+import CollectionBids from "@/components/CollectionBids"
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
@@ -24,18 +26,17 @@ export default function Home() {
   const [collectionBidPrice, setCollectionBidPrice] = useState<number>()
 
   const { address } = useAccount()
-  const { totalVolume, totalSales, marketplaceFee, refetchTotalVolume, refetchTotalSales } = useMarketplaceInfo()
-  const { data: marketplace = { listings: [], tokenBids: [] }, isLoading } = useMarketplaceIndex(BigInt("9967517"))
+
   const { bidCollection } = useBidCollection()
+  const { info, bidsIndex, listingsIndex, collections } = useMarketplace()
+  let userListings: any[] = []
+
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  useEffect(() => {
-    console.log(marketplace.tokenBids)
-  }, [marketplace.tokenBids.length])
-
-  const userListings = useMemo(() => marketplace.listings.filter((l) => l.seller.toLowerCase() === address?.toLowerCase()), [marketplace.listings, address])
+  userListings = useMemo(() => {
+    if (listingsIndex) return listingsIndex.filter((l: any) => l.seller.toLowerCase() === address?.toLowerCase())
+  }, [listingsIndex, address])
 
   const handleBidCollection = async () => {
     console.log("bid1")
@@ -71,9 +72,9 @@ export default function Home() {
             transition={{ duration: 0.2 }}
             className="flex flex-col gap-2 justify-center items-center"
           >
-            <Link href="/mint">
+            <Link href="/launchpad">
               <button className="py-2 px-4 rounded-4xl mt-3 w-fit flex gap-2 hover:opacity-85  ">
-                <span>Go to mint</span>
+                <span>Go to launchpad</span>
                 <span>&rarr;</span>
               </button>
             </Link>
@@ -84,19 +85,19 @@ export default function Home() {
         <div className="flex items-center justify-start w-full gap-4 text-(--accent) opacity-75 font-bold">
           <div>
             <span className="  text-(--accent)/75">Total volume: </span>
-            {(Number(totalVolume) / 1e18).toFixed(2) + " ETH"}
+            {(Number(info.totalVolume) / 1e18).toFixed(2) + " ETH"}
           </div>
 
           <div>
             <span className="  text-(--accent)/75">Total sales: </span>
-            {Number(totalSales)}
+            {Number(info.totalSales)}
           </div>
           <div>
             <span className="  text-(--accent)/75">Marketplace fee: </span>
-            {Number(marketplaceFee) / 100 + "%"}
+            {Number(info.marketplaceFee) / 100 + "%"}
           </div>
         </div>
-        <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full">
+        <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full overflow-hidden">
           <div className="border-b border-(--accent)/50">
             <div className="flex justify-between items-center">
               <div className="flex">
@@ -112,41 +113,52 @@ export default function Home() {
                   className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "user" ? " " : "opacity-50")}
                 >
                   <FaUser />
-                  <span className="hidden md:block">Items</span>
+                  <span className="hidden md:block">Portfolio</span>
+                </button>
+                <button
+                  onClick={() => setPageCard("collectionBids")}
+                  className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "collectionBids" ? " " : "opacity-50")}
+                >
+                  <TbHammer />
+                  <span className="hidden md:block">Bids</span>
                 </button>
                 <div className="border-l border-(--accent)/20"></div>
-                <button
-                  onClick={() => {
-                    setSortBy("price")
-                    setSortDir(sortDir == "asc" ? "desc" : "asc")
-                  }}
-                  className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
-                >
-                  <span>Price</span>
-                  <FaArrowDown
-                    className={`
+                {pageCard != "collectionBids" && (
+                  <div className="flex">
+                    <button
+                      onClick={() => {
+                        setSortBy("price")
+                        setSortDir(sortDir == "asc" ? "desc" : "asc")
+                      }}
+                      className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
+                    >
+                      <span>Price</span>
+                      <FaArrowDown
+                        className={`
                       transition-transform
                       ${sortBy !== "price" ? "opacity-50" : ""}
                       ${sortBy === "price" && sortDir === "asc" ? "rotate-180" : ""}
                     `}
-                  />
-                </button>
-                <button
-                  onClick={() => {
-                    setSortBy("id")
-                    setSortDir(sortDir == "asc" ? "desc" : "asc")
-                  }}
-                  className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
-                >
-                  <span>Id</span>
-                  <FaArrowDown
-                    className={`
+                      />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy("id")
+                        setSortDir(sortDir == "asc" ? "desc" : "asc")
+                      }}
+                      className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
+                    >
+                      <span>Id</span>
+                      <FaArrowDown
+                        className={`
                       transition-transform
                       ${sortBy !== "id" ? "opacity-50" : ""}
                       ${sortBy === "id" && sortDir === "asc" ? "rotate-180" : ""}
                     `}
-                  />
-                </button>
+                      />
+                    </button>
+                  </div>
+                )}
                 <div className="border-l border-(--accent)/20"></div>
               </div>
 
@@ -158,22 +170,28 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="p-4 bg-(--accent)/20">
+          <div className=" bg-(--accent)/20">
             {pageCard == "marketplace" && (
               <div>
                 <ListedNFTS
-                  listings={marketplace.listings}
+                  listings={listingsIndex ? listingsIndex : []}
                   userListings={userListings}
                   sortBy={sortBy}
                   sortDir={sortDir}
-                  refetchTotalSales={refetchTotalSales}
-                  refetchTotalVolume={refetchTotalVolume}
+                  refetchTotalSales={info ? info.refetchTotalSales : () => {}}
+                  refetchTotalVolume={info ? info.refetchTotalVolume : () => {}}
+                  collections={collections}
                 />
               </div>
             )}
             {pageCard == "user" && (
               <div>
-                <ListNftWithApproval listings={[]} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={{}} refetchTotalVolume={{}} />
+                <ListNftWithApproval collections={collections} listings={[]} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={{}} refetchTotalVolume={{}} />
+              </div>
+            )}
+            {pageCard == "collectionBids" && (
+              <div>
+                <CollectionBids collectionBids={bidsIndex.collectionBids} />
               </div>
             )}
           </div>
@@ -181,7 +199,7 @@ export default function Home() {
       </section>
       {bidCollectionDiv && (
         <div id="bcd_bg" onClick={handleClose} className="top-0 bg-black/25 absolute w-screen h-full  flex items-center gap-2 text-(--accent)! justify-center z-200">
-          <div className="card rounded">
+          <div className="card rounded ">
             <div className="flex w-full justify-between  ">
               <div className="p-4 flex gap-4 text-(--accent)/80 items-center">
                 <TbHammer className="text-2xl " />

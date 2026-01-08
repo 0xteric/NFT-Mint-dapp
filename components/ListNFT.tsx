@@ -4,24 +4,31 @@ import { useState, useEffect, useRef } from "react"
 import { Address, parseEther, erc721Abi } from "viem"
 import { useAccount, useReadContract, useWriteContract } from "wagmi"
 import { nftAbi } from "@/lib/abi"
-import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, SortBy, SortDir } from "@/lib/constants"
+import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, CORE_CONTRACT_ADDRESS } from "@/lib/constants"
 import { useList, useCancelList, useUserTokens } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
-import { FaLink } from "react-icons/fa"
-import { FiCheckCircle } from "react-icons/fi"
-import { RxCrossCircled } from "react-icons/rx"
+import { FaSearch } from "react-icons/fa"
 import { ListedNFTSProps, TxState, UserNft } from "@/lib/constants"
 import { useQueryClient } from "@tanstack/react-query"
+import { FiCopy } from "react-icons/fi"
+import { FaExternalLinkAlt, FaHistory } from "react-icons/fa"
+import { HiOutlineCollection } from "react-icons/hi"
+import { TbHammer } from "react-icons/tb"
+import { FaInbox } from "react-icons/fa6"
+import { NFTCard } from "./NFTCard"
 
-export default function ListNftWithApproval({ userListings, sortBy, sortDir }: ListedNFTSProps) {
+export default function ListNftWithApproval({ userListings = [], sortBy, sortDir, collections = [] }: ListedNFTSProps) {
   const [collection, setCollection] = useState<Address | "">(NFT_CONTRACT_ADDRESS)
   const [txMap, setTxMap] = useState<Record<string, TxState>>({})
   const [tokenId, setTokenId] = useState<bigint | "">("")
   const [price, setPrice] = useState<number | string>("")
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
   const [items, setUserItems] = useState<UserNft[]>([])
-
+  const [collectionSelected, setCollectionSelected] = useState<string>("")
+  const [bidsOrItems, setBidsOrItems] = useState<"bids" | "items">("items")
+  const [collectionView, setCollectionView] = useState<"inventory" | "colBids" | "tokenBids" | "history">("inventory")
+  const [itemsBatch, setItemsBatch] = useState<UserNft[]>([])
   const loadingQueryRef = useRef(false)
 
   const queryClient = useQueryClient()
@@ -29,25 +36,35 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
   const { writeContractAsync } = useWriteContract()
   const { list, publicClient } = useList()
   const { cancelList } = useCancelList()
-  const { data: userIds = [], isLoading } = useUserTokens(address)
+  const collectionsReady = Boolean(collections?.length)
+
+  const { data: userTokensData, isLoading = true } = useUserTokens(address, collections, collectionsReady)
 
   useEffect(() => {
-    if (!userIds.length) {
-      setUserItems([])
-      return
-    }
+    console.log(collectionsReady, isLoading)
 
-    const sorted: bigint[] = [...userIds].sort((a, b) => Number(a) - Number(b))
+    if (!collectionsReady || isLoading || !userTokensData) return
+    console.log("2 ", userTokensData.tokens)
 
-    const userItems: UserNft[] = sorted.map((id: bigint) => ({
-      id,
-      listed: userListings.some((l) => l.tokenId === id),
-      price: userListings.find((l) => l.tokenId === id)?.price || BigInt(0),
-    }))
+    const listingsMap = new Map(userListings.map((l) => [l.tokenId.toString() + "-" + l.collection.toString(), l]))
+
+    const userItems: UserNft[] = userTokensData.tokens.map((token: any) => {
+      const listing = listingsMap.get(token.tokenId.toString() + "-" + token.collection.toString())
+      const name: string = String(getNFTName(token.collection))
+
+      return {
+        id: token.tokenId,
+        collection: token.collection,
+        listed: Boolean(listing),
+        price: listing?.price ?? BigInt(0),
+        name,
+        onBatch: false,
+      }
+    })
 
     setUserItems(userItems)
     setStatus("idle")
-  }, [userIds.join(","), userListings])
+  }, [isLoading])
 
   function setTx(tokenId: bigint, patch: Partial<TxState>) {
     const key = tokenId.toString()
@@ -69,7 +86,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
     address: collection || undefined,
     abi: erc721Abi,
     functionName: "isApprovedForAll",
-    args: collection && address ? [address, MARKETPLACE_CONTRACT_ADDRESS] : undefined,
+    args: collection && address ? [address, CORE_CONTRACT_ADDRESS] : undefined,
     query: {
       enabled: Boolean(collection && address),
     },
@@ -84,7 +101,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
         address: collection,
         abi: erc721Abi,
         functionName: "setApprovalForAll",
-        args: [MARKETPLACE_CONTRACT_ADDRESS, true],
+        args: [CORE_CONTRACT_ADDRESS, true],
       })
 
       setTx(id, { txStatus: "loading", txHash: hash })
@@ -126,7 +143,7 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
           loadingQueryRef.current = true
 
           await queryClient.invalidateQueries({ queryKey: ["marketplace-index"] })
-          await queryClient.invalidateQueries({ queryKey: ["user-tokens", address] })
+          await queryClient.invalidateQueries({ queryKey: ["user-tokens"] })
 
           setTimeout(() => {
             loadingQueryRef.current = false
@@ -205,14 +222,41 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
     })
   }
 
+  function getNFTName(collection: Address) {
+    try {
+      const { data: name } = useReadContract({
+        address: collection,
+        abi: erc721Abi,
+        functionName: "name",
+      })
+      return name
+    } catch (e) {
+      console.log(e)
+      return "name"
+    }
+  }
+
   const sortedUserItems = sortByField(
     items,
     (i) => i.id,
     (i) => i.price
   )
 
+  const copyToClipboard = (value: string) => {
+    navigator.clipboard.writeText(value)
+  }
+  const addItemToBatch = (item: UserNft) => {
+    setItemsBatch((prev) => [...prev, item])
+  }
+
+  const removeItemFromBatch = (item: UserNft) => {
+    setItemsBatch((prev) => prev.filter((i) => i.id !== item.id || i.collection !== item.collection))
+  }
+
+  const isInBatch = (item: UserNft) => itemsBatch.some((b) => b.id === item.id && b.collection === item.collection)
+
   return (
-    <div onClick={handleBgClick} className=" flex flex-col gap-2">
+    <div onClick={handleBgClick} className=" flex flex-col gap-2 w-full">
       {!address && (
         <div className="w-full flex justify-center">
           <div className="w-50">
@@ -220,218 +264,125 @@ export default function ListNftWithApproval({ userListings, sortBy, sortDir }: L
           </div>
         </div>
       )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
-        {status == "loading" && (
-          <div className="w-full relative flex justify-center  aspect-square  px-4  animate-pulse">
-            <div className="absolute w-full h-full bg-(--accent) opacity-50 rounded"></div>
+      <div className="flex gap-4 w-full">
+        <div className="flex flex-col border-r border-(--accent)/30 p-4">
+          <div className="flex gap-2 items-center">
+            <h2 className="text-xl font-bold">
+              {address?.slice(0, 5)}...{address?.slice(-5)}
+            </h2>
+            <button onClick={() => copyToClipboard(address)} className="bg-transparent! hover:opacity-75!">
+              <FiCopy className=" text-xl" />
+            </button>
+            <a href={`https://sepolia.etherscan.io/address/${address}`} target="_blank">
+              <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
+            </a>
           </div>
-        )}
-        {items.length > 0 &&
-          sortedUserItems.map((i, index) => {
-            const key = i.id.toString()
-            const tx = txMap[key] ?? { txStatus: "idle" }
+          <div className="flex gap-4 mt-2 border-b border-(--accent)/30">
+            <button onClick={() => setBidsOrItems("items")} className={"flex items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}>
+              <HiOutlineCollection />
+              <span>Owned collections</span>
+            </button>
+            <button onClick={() => setBidsOrItems("bids")} className={"flex items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}>
+              <HiOutlineCollection />
+              <span>Biddded collections</span>
+            </button>
+          </div>
+          <div className="flex items-center gap-2 py-2">
+            <label className="flex items-center gap-3 card p-2 rounded w-full border-(--accent)/50 border">
+              <FaSearch className="opacity-50" />
+              <input type="text" className="bg-transparent!" placeholder="Search collection" />
+            </label>
+          </div>
+        </div>
+        <div className="flex flex-col py-3 pr-4 grow">
+          <div className="w-full text-start text-2xl font-bold mb-2">
+            <h2>{collectionSelected.length > 0 ? "" : "All collections"}</h2>
+          </div>
+          <div className=" w-full flex gap-2 border-b border-(--accent)/30 mb-2">
+            <button
+              onClick={() => setCollectionView("inventory")}
+              className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "inventory" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
+            >
+              <HiOutlineCollection />
+              <span>Inventory</span>
+            </button>
+            <button
+              onClick={() => setCollectionView("colBids")}
+              className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "colBids" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
+            >
+              <TbHammer />
+              <span>Collection bids</span>
+            </button>
+            <button
+              onClick={() => setCollectionView("tokenBids")}
+              className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "tokenBids" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
+            >
+              <TbHammer />
+              <span>Token bids</span>
+            </button>
+            <button
+              onClick={() => setCollectionView("history")}
+              className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "history" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
+            >
+              <FaHistory />
+              <span>History</span>
+            </button>
+          </div>
 
-            return (
-              <AnimatePresence key={i.id.toString()}>
-                <motion.div
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ duration: 0.1, delay: index * 0.1 }}
-                  className="aspect-square min-w-25 relative hover:scale-103 transition-all duration-300 overflow-hidden text-white"
-                >
-                  <button
-                    id="list-btn"
-                    onClick={(e) => {
-                      if (!isApproved) {
-                        setTokenId(i.id)
-                        approveCollection(i.id)
-                      } else {
-                        if (tokenId == i.id) {
-                          if (i.listed) {
-                            handleDelist(i.id)
-                          } else {
-                            handleList(e, i.id)
-                          }
-                        } else {
-                          setPrice("")
-                          return setTokenId(i.id)
-                        }
-                      }
-                    }}
-                    className="absolute w-full h-full left-0 bg-transparent!  rounded z-100 hover:none!"
-                  ></button>
-                  <div className="bg-(--accent) relative w-full h-full transition-all duration-300  rounded  disabled:opacity-50 overflow-hidden">
-                    <div className={"absolute transition-all duration-300 text-2xl top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"}>
-                      <AnimatePresence mode="wait">
-                        {!isApproved && (tx.txStatus === "idle" || tokenId != i.id) && (
-                          <motion.div
-                            key="idle"
-                            initial={{ opacity: 0, translateY: 33 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 33 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex justify-center text-center w-full"
-                          >
-                            <span>Approve</span>
-                          </motion.div>
-                        )}
-
-                        {!isApproved && tokenId == i.id && tx.txStatus === "waiting" && (
-                          <motion.div
-                            key="waiting"
-                            initial={{ opacity: 0, translateY: 33 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 33 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex justify-center text-center w-full"
-                          >
-                            <span>Sign...</span>
-                          </motion.div>
-                        )}
-                        {!isApproved && tokenId == i.id && tx.txHash && (
-                          <motion.div
-                            key="loading"
-                            initial={{ opacity: 0, translateY: 33 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            exit={{ opacity: 0, translateY: 33 }}
-                            transition={{ duration: 0.2 }}
-                            className="flex gap-4 justify-center flex-col items-center  text-center w-full absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200"
-                          >
-                            {tx.txStatus === "loading" && (
-                              <svg className="w-8 h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
-                              </svg>
-                            )}
-                            {tx.txStatus === "success" && <FiCheckCircle className="text-[#6dfa6d]" />}
-                            {tx.txStatus === "error" && <RxCrossCircled className="text-red-500" />}
-                            <a target="_blank" href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200">
-                              <FaLink />
-                              <span>Tx: </span>
-                              <span>
-                                {tx.txHash?.slice(0, 6)}...{tx.txHash?.slice(-4)}
-                              </span>
-                            </a>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                    {isApproved && !tx.txHash && !i.listed && (
-                      <AnimatePresence mode="wait">
-                        {tokenId == i.id && (tx.txStatus == "idle" || tx.txStatus == "waiting") && (
-                          <motion.div
-                            className="absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full z-250"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <div className="p-2 h-min flex justify-center  w-full  relative ">
-                              <div className="flex justify-center gap-1 px-2 overflow-visible">
-                                <input
-                                  id="input-price"
-                                  type="number"
-                                  className=" bg-transparent! rounded text-center w-16 overflow-visible "
-                                  placeholder="0.0"
-                                  autoFocus
-                                  value={price}
-                                  onChange={(e) => setPrice(e.target.value)}
-                                />
-                                <span>ETH</span>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    )}
-                    {isApproved && (
-                      <div
-                        className={
-                          "absolute transition-all duration-300 " + (tokenId == i.id || tx.txHash ? "top-2 left-3" : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xs md:text-sm lg:text-xl")
-                        }
-                      >
-                        <AnimatePresence>
-                          {(tx.txStatus == "idle" || (tokenId != i.id && !tx.txHash) || i.listed) && (
-                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                              {i.listed ? <div>{Number(i.price) / 1e18} ETH</div> : "List"}
-                            </motion.div>
-                          )}
-                          {(tokenId == i.id || tx.txHash) &&
-                            ((tx.txStatus == "waiting" && !i.listed && (
-                              <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                                <span>Sign...</span>
-                              </motion.div>
-                            )) ||
-                              (tx.txStatus == "loading" && !i.listed && (
-                                <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                                  <span>Listing...</span>
-                                </motion.div>
-                              )))}
-                        </AnimatePresence>
-                      </div>
-                    )}
-                    {isApproved && i.listed && tokenId == i.id && (
-                      <div className={"absolute transition-all duration-300 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"}>
-                        <AnimatePresence>
-                          {((tx.txStatus == "idle" && i.listed) || tokenId != i.id) && (
-                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                              Delist
-                            </motion.div>
-                          )}
-                          {tokenId == i.id && tx.txStatus == "waiting" && (
-                            <motion.div initial={{ opacity: 0, translateY: 3 }} animate={{ opacity: 1, translateY: 0 }} exit={{ opacity: 0, translateY: -3 }} transition={{ duration: 0.3 }}>
-                              <span>Sign...</span>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )}
-                    {tx.txHash && isApproved && (
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex gap-4 justify-center flex-col items-center  text-center w-full absolute  top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-200"
-                      >
-                        {tx.txStatus === "loading" && (
-                          <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
-                            <svg className=" w-4 h-4 lg:w-8 lg:h-8 animate-spin text-white" viewBox="0 0 24 24" fill="none">
-                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />
-                            </svg>
-                          </motion.div>
-                        )}
-                        {tx.txStatus === "success" && (
-                          <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
-                            <FiCheckCircle className="text-[#6dfa6d] w-4 h-4 lg:w-8 lg:h-8" />
-                          </motion.div>
-                        )}
-                        {tx.txStatus === "error" && (
-                          <motion.div key="loading" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0 }} transition={{ duration: 0.2 }}>
-                            <RxCrossCircled className="text-red-500 w-4 h-4 lg:w-8 lg:h-8" />
-                          </motion.div>
-                        )}
-                        <a target="_blank" href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} className=" flex  items-center gap-2 hover:opacity-80 z-200 text-xs md:text-sm lg:text-xl">
-                          <FaLink />
-                          <span>Tx: </span>
-                          <span>
-                            {tx.txHash?.slice(0, 6)}...{tx.txHash?.slice(-4)}
-                          </span>
-                        </a>
-                      </motion.div>
-                    )}
-
-                    <span className="absolute bottom-1 right-2  text-xs text-(--bg-secondary)!">
-                      <strong className=" opacity-50  ">id: </strong>
-                      {i.id}
-                    </span>
+          {collectionView == "inventory" && (
+            <div>
+              <div className="w-full py-2 flex gap-2">
+                <button className="rounded flex gap-3 py-1 px-10  border border-(--accent) bg-transparent! text-(--accent)!">
+                  <span>List</span> <span>{itemsBatch.length}</span>
+                </button>
+                <button className="rounded py-1 px-10  border border-(--accent) bg-transparent! text-(--accent)!">Delist</button>
+              </div>
+              {items.length == 0 && !isLoading && (
+                <div className=" flex flex-col items-center justify-center gap-2 p-4">
+                  <FaInbox className="text-3xl" />
+                  <p>You have no tiems </p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
+                {status == "loading" && (
+                  <div className="w-full relative flex justify-center  aspect-9/12  px-4  animate-pulse">
+                    <div className="absolute w-full h-full bg-(--accent) opacity-50 rounded"></div>
                   </div>
-                </motion.div>
-              </AnimatePresence>
-            )
-          })}
+                )}
+
+                {items.length > 0 &&
+                  sortedUserItems.map((i, index) => {
+                    const key = i.id.toString()
+                    const tx = txMap[key] ?? { txStatus: "idle" }
+
+                    return (
+                      <AnimatePresence key={i.id.toString() + i.collection}>
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          transition={{ duration: 0.1, delay: index * 0.1 }}
+                          onClick={() => {
+                            if (!isInBatch(i)) {
+                              addItemToBatch(i)
+                            } else {
+                              removeItemFromBatch(i)
+                            }
+                          }}
+                          className={
+                            " aspect-9/12 min-w-25 relative border-2  hover:border-(--accent) hover:cursor-pointer bg-(--accent) rounded  overflow-hidden text-white " +
+                            (isInBatch(i) ? " border-(--accent)" : "border-(--bg-secondary)")
+                          }
+                        >
+                          <NFTCard token={i} />
+                        </motion.div>
+                      </AnimatePresence>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

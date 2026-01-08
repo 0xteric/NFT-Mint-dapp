@@ -10,6 +10,7 @@ import { FiCheckCircle } from "react-icons/fi"
 import { ListedNFTSProps, TxState, SortBy, SortDir } from "@/lib/constants"
 import { FaUser, FaLink } from "react-icons/fa"
 import { useQueryClient } from "@tanstack/react-query"
+import { FaInbox } from "react-icons/fa6"
 
 export default function ListedNFTS({ listings, sortBy, sortDir, refetchTotalSales, refetchTotalVolume }: ListedNFTSProps) {
   const [txMap, setTxMap] = useState<Record<string, TxState>>({})
@@ -25,16 +26,18 @@ export default function ListedNFTS({ listings, sortBy, sortDir, refetchTotalSale
   const { bidToken } = useBidToken()
 
   useEffect(() => {
-    setTxMap((prev) => {
-      const next: Record<string, TxState> = {}
+    if (listings) {
+      setTxMap((prev) => {
+        const next: Record<string, TxState> = {}
 
-      for (const l of listings) {
-        const key = l.tokenId.toString()
-        next[key] = prev[key] ?? { txStatus: "idle", action: "none" }
-      }
+        for (const l of listings) {
+          const key = l.tokenId.toString()
+          next[key] = prev[key] ?? { txStatus: "idle", action: "none" }
+        }
 
-      return next
-    })
+        return next
+      })
+    }
 
     setStatus("idle")
   }, [listings])
@@ -141,19 +144,25 @@ export default function ListedNFTS({ listings, sortBy, sortDir, refetchTotalSale
       return sortDir === "asc" ? diff : -diff
     })
   }
+  let sortedListings: any[] = []
+  if (listings)
+    sortedListings = sortByField(
+      listings,
+      (l) => l.tokenId,
+      (l) => l.price
+    )
 
-  const sortedListings = sortByField(
-    listings,
-    (l) => l.tokenId,
-    (l) => l.price
-  )
-
-  if (listings.length === 0 && status == "idle") {
-    return <p>No hay NFTs listados</p>
+  if (listings && listings.length === 0 && status == "idle") {
+    return (
+      <div className=" flex flex-col items-center justify-center gap-2 p-4">
+        <FaInbox className="text-3xl" />
+        <p>The are no listings on this collection</p>
+      </div>
+    )
   }
 
   return (
-    <div onClick={handleBgClick} className="flex flex-col gap-2">
+    <div onClick={handleBgClick} className="flex flex-col gap-2 p-4">
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {status == "loading" && (
           <div className="w-full relative flex justify-center  aspect-square  px-4  animate-pulse">

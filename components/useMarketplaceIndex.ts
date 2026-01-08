@@ -1,12 +1,12 @@
 "use client"
 
-import { MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
+import { MARKETPLACE_CONTRACT_ADDRESS, CORE_CONTRACT_ADDRESS, BIDS_CONTRACT_ADDRESS } from "@/lib/constants"
 import { decodeEventLog } from "viem"
-import { marketplaceAbi } from "@/lib/abi"
+import { bidsABI, marketplaceAbi, marketplaceCoreABI } from "@/lib/abi"
 
 const CHUNK_SIZE = BigInt(1_000)
 
-async function getLogs(publicClient: any, fromBlock: bigint) {
+async function getLogs(publicClient: any, fromBlock: bigint, contract: string) {
   const latest = await publicClient.getBlockNumber()
   const allLogs: any[] = []
 
@@ -17,7 +17,7 @@ async function getLogs(publicClient: any, fromBlock: bigint) {
     if (currentTo > latest) currentTo = latest
 
     const logs = await publicClient.getLogs({
-      address: MARKETPLACE_CONTRACT_ADDRESS,
+      address: contract,
       fromBlock: currentFrom,
       toBlock: currentTo,
     })
@@ -29,20 +29,19 @@ async function getLogs(publicClient: any, fromBlock: bigint) {
   return allLogs
 }
 
-export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
-  const logs = await getLogs(publicClient, fromBlock)
+export async function indexMarketplaceListings(publicClient: any, fromBlock: bigint) {
+  const logs = await getLogs(publicClient, fromBlock, CORE_CONTRACT_ADDRESS)
 
   const listings = new Map<string, any>()
-  const tokenBids = new Map<string, any>()
-  const collectionBids = new Map<string, any>()
-
+  const collections = new Map<string, any>()
   for (const log of logs) {
     try {
       const parsed = decodeEventLog({
-        abi: marketplaceAbi,
+        abi: marketplaceCoreABI,
         topics: log.topics,
         data: log.data,
       })
+      console.log(parsed)
 
       switch (parsed.eventName) {
         case "ListingCreated": {
@@ -80,6 +79,44 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
           break
         }
 
+        case "CollectionRegistered": {
+          const id = parsed.args.collection.toString()
+          collections.set(id, {
+            collection: parsed.args.collection,
+            owner: parsed.args.owner,
+            royaltyFee: parsed.args.royaltyFee,
+            totalVolume: 0,
+            totalSales: 0,
+            createdAtBlock: log.blockNumber,
+            updatedAtBlock: log.blockNumber,
+          })
+          break
+        }
+      }
+    } catch {}
+  }
+
+  return {
+    listings: Array.from(listings.values()),
+    collections: Array.from(collections.values()),
+  }
+}
+
+export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint) {
+  const logs = await getLogs(publicClient, fromBlock, BIDS_CONTRACT_ADDRESS)
+
+  const tokenBids = new Map<string, any>()
+  const collectionBids = new Map<string, any>()
+
+  for (const log of logs) {
+    try {
+      const parsed = decodeEventLog({
+        abi: bidsABI,
+        topics: log.topics,
+        data: log.data,
+      })
+
+      switch (parsed.eventName) {
         case "TokenBidCreated": {
           const key = `${parsed.args.collection}-${parsed.args.tokenId}-${parsed.args.bidder}`
           tokenBids.set(key, {
@@ -144,13 +181,11 @@ export async function indexMarketplace(publicClient: any, fromBlock: bigint) {
           break
         }
       }
-    } catch {
-      // log no pertenece a nuestros eventos
-    }
+    } catch {}
   }
 
   return {
-    listings: Array.from(listings.values()),
     tokenBids: Array.from(tokenBids.values()),
+    collectionBids: Array.from(collectionBids.values()),
   }
 }
