@@ -2,10 +2,10 @@ import type { Metadata } from "next"
 import { Address } from "viem"
 
 export const NFT_CONTRACT_ADDRESS = "0x1C7607fa0a271605bdc2293B2b9E589e71D9c9e8"
-export const MARKETPLACE_CONTRACT_ADDRESS = "0xbeAaD8c417f69c8a9e0adf26De34a80d8AEfEfD1"
-export const CORE_CONTRACT_ADDRESS = "0x1F82e2C53B688C49B653C80F5EF0316D18d43Be3"
-export const PAYMENTS_CONTRACT_ADDRESS = "0xd786e716e33D673B17511f12C743a18cf623f6E2"
-export const BIDS_CONTRACT_ADDRESS = "0x6FeE331c6D71CE5eFc653613da9713C6B50c602A"
+export const MARKETPLACE_CONTRACT_ADDRESS = "0x74f3666388E7fE7897f885300C4a26e9DD950786"
+export const CORE_CONTRACT_ADDRESS = "0x44b4EFFE314f17729A3Db370aa5161A8C2D606aC"
+export const PAYMENTS_CONTRACT_ADDRESS = "0x4A3B39683d84373ef9026c0C334D285812280CD9"
+export const BIDS_CONTRACT_ADDRESS = "0x37F63267072285820217616D67Bcb63191534782"
 
 export const metadata: Metadata = {
   title: "SUP!",
@@ -38,10 +38,11 @@ export type ListedNft = {
 }
 
 export type UserNft = {
-  id: bigint
+  tokenId: bigint
   collection: Address
-  price: bigint
+  price?: bigint
   listed: boolean
+  priceEth?: string
   name: string
 }
 
@@ -54,11 +55,10 @@ export type TxState = {
 export type ListedNFTSProps = {
   listings: ListedNft[]
   userListings: ListedNft[]
-  sortBy: SortBy
-  sortDir: SortDir
   refetchTotalVolume: any
   refetchTotalSales: any
   collections: any[]
+  collectionBids: any[]
 }
 
 export type SortBy = "id" | "price"

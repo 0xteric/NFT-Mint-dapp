@@ -6,11 +6,8 @@ import { useEffect, useState, useMemo } from "react"
 import ListedNFTS from "@/components/ListedNFTS"
 import ListNftWithApproval from "@/components/ListNFT"
 import { FaUser } from "react-icons/fa"
-import { FaShop } from "react-icons/fa6"
-import { SortBy, SortDir } from "@/lib/constants"
+import { FaShop, FaGavel } from "react-icons/fa6"
 import { useBidCollection } from "@/components/Contract"
-import { FaArrowDown } from "react-icons/fa"
-import { TbHammer } from "react-icons/tb"
 import { IoClose } from "react-icons/io5"
 import { parseEther } from "viem"
 import { useMarketplace } from "@/app/context/MarketplaceContext"
@@ -19,15 +16,9 @@ import CollectionBids from "@/components/CollectionBids"
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [pageCard, setPageCard] = useState("marketplace")
-  const [sortBy, setSortBy] = useState<SortBy>("price")
-  const [sortDir, setSortDir] = useState<SortDir>("asc")
-  const [bidCollectionDiv, setBidCollectionDiv] = useState<boolean>(false)
-  const [collectionBidAmount, setCollectionBidAmount] = useState<number>()
-  const [collectionBidPrice, setCollectionBidPrice] = useState<number>()
 
   const { address } = useAccount()
 
-  const { bidCollection } = useBidCollection()
   const { info, bidsIndex, listingsIndex, collections } = useMarketplace()
   let userListings: any[] = []
 
@@ -38,22 +29,8 @@ export default function Home() {
     if (listingsIndex) return listingsIndex.filter((l: any) => l.seller.toLowerCase() === address?.toLowerCase())
   }, [listingsIndex, address])
 
-  const handleBidCollection = async () => {
-    console.log("bid1")
-    if (collectionBidPrice && collectionBidAmount && !(collectionBidPrice > 0) && !(collectionBidAmount > 0)) return
-    console.log("bid2")
-    const hash = await bidCollection(parseEther(Number(collectionBidPrice).toString()), Number(collectionBidAmount))
-  }
-  const handleClose = (event: any) => {
-    if (event.target.id === "bcd_bg") {
-      setBidCollectionDiv(false)
-      setCollectionBidAmount(undefined)
-      setCollectionBidPrice(undefined)
-    }
-  }
-
   return (
-    <div className="flex flex-col items-center justify-center gap-4 font-sans w-full  text-center  ">
+    <div className="flex flex-col items-center justify-center gap-4  w-full  text-center  ">
       <AnimatePresence>
         {mounted && (
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="mt-10">
@@ -119,54 +96,10 @@ export default function Home() {
                   onClick={() => setPageCard("collectionBids")}
                   className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "collectionBids" ? " " : "opacity-50")}
                 >
-                  <TbHammer />
+                  <FaGavel />
                   <span className="hidden md:block">Bids</span>
                 </button>
                 <div className="border-l border-(--accent)/20"></div>
-                {pageCard != "collectionBids" && (
-                  <div className="flex">
-                    <button
-                      onClick={() => {
-                        setSortBy("price")
-                        setSortDir(sortDir == "asc" ? "desc" : "asc")
-                      }}
-                      className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
-                    >
-                      <span>Price</span>
-                      <FaArrowDown
-                        className={`
-                      transition-transform
-                      ${sortBy !== "price" ? "opacity-50" : ""}
-                      ${sortBy === "price" && sortDir === "asc" ? "rotate-180" : ""}
-                    `}
-                      />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy("id")
-                        setSortDir(sortDir == "asc" ? "desc" : "asc")
-                      }}
-                      className="p-4 bg-transparent! flex items-center gap-2 text-(--accent)! hover:opacity-100!"
-                    >
-                      <span>Id</span>
-                      <FaArrowDown
-                        className={`
-                      transition-transform
-                      ${sortBy !== "id" ? "opacity-50" : ""}
-                      ${sortBy === "id" && sortDir === "asc" ? "rotate-180" : ""}
-                    `}
-                      />
-                    </button>
-                  </div>
-                )}
-                <div className="border-l border-(--accent)/20"></div>
-              </div>
-
-              <div className="flex border-l border-(--accent)/20 ">
-                <button onClick={() => setBidCollectionDiv(true)} className=" p-5 md:p-4 bg-transparent! flex items-center gap-2 text-(--accent)! ">
-                  <TbHammer />
-                  <span className="md:block hidden">Place collection bid</span>
-                </button>
               </div>
             </div>
           </div>
@@ -174,10 +107,9 @@ export default function Home() {
             {pageCard == "marketplace" && (
               <div>
                 <ListedNFTS
+                  collectionBids={bidsIndex ? bidsIndex.collectionBids : []}
                   listings={listingsIndex ? listingsIndex : []}
                   userListings={userListings}
-                  sortBy={sortBy}
-                  sortDir={sortDir}
                   refetchTotalSales={info ? info.refetchTotalSales : () => {}}
                   refetchTotalVolume={info ? info.refetchTotalVolume : () => {}}
                   collections={collections}
@@ -186,48 +118,24 @@ export default function Home() {
             )}
             {pageCard == "user" && (
               <div>
-                <ListNftWithApproval collections={collections} listings={[]} userListings={userListings} sortBy={sortBy} sortDir={sortDir} refetchTotalSales={{}} refetchTotalVolume={{}} />
+                <ListNftWithApproval
+                  collectionBids={bidsIndex ? bidsIndex.collectionBids : []}
+                  collections={collections}
+                  listings={[]}
+                  userListings={userListings}
+                  refetchTotalSales={{}}
+                  refetchTotalVolume={{}}
+                />
               </div>
             )}
             {pageCard == "collectionBids" && (
               <div>
-                <CollectionBids collectionBids={bidsIndex.collectionBids} />
+                <CollectionBids collectionBids={bidsIndex ? bidsIndex.collectionBids : []} />
               </div>
             )}
           </div>
         </div>
       </section>
-      {bidCollectionDiv && (
-        <div id="bcd_bg" onClick={handleClose} className="top-0 bg-black/25 absolute w-screen h-full  flex items-center gap-2 text-(--accent)! justify-center z-200">
-          <div className="card rounded ">
-            <div className="flex w-full justify-between  ">
-              <div className="p-4 flex gap-4 text-(--accent)/80 items-center">
-                <TbHammer className="text-2xl " />
-                <h2 className=" text-xl">Place collection bid</h2>
-              </div>
-
-              <button onClick={() => setBidCollectionDiv(false)} className=" p-4  bg-transparent! flex items-center gap-2 text-(--accent)! ">
-                <IoClose />
-              </button>
-            </div>
-            <div className="p-4 flex flex-col">
-              <div className="flex  gap-2 items-center justify-center rounded border border-(--accent)/50 bg-(--accent)/30 overflow-hidden">
-                <div className="p-4 flex gap-2 items-center">
-                  <span className="font-bold ">Price: </span>
-                  <input type="number" value={collectionBidPrice} onChange={(e: any) => setCollectionBidPrice(e.target.value)} placeholder="0.0 ETH" className=" bg-transparent! w-20" />
-                </div>
-                <div className="py-4 flex gap-2 items-center">
-                  <span className="font-bold ">Amount: </span>
-                  <input type="number" value={collectionBidAmount} onChange={(e: any) => setCollectionBidAmount(e.target.value)} placeholder="0" className="w-10 bg-transparent!" />
-                </div>
-                <button onClick={handleBidCollection} className="p-4 px-6 border-l border-(--accent)/50 flex items-center gap-2 ">
-                  Bid
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 import { MARKETPLACE_CONTRACT_ADDRESS, CORE_CONTRACT_ADDRESS, BIDS_CONTRACT_ADDRESS } from "@/lib/constants"
 import { decodeEventLog } from "viem"
-import { bidsABI, marketplaceAbi, marketplaceCoreABI } from "@/lib/abi"
+import { BidsABI, MarketplaceABI, MarketplaceCoreABI } from "@/lib/abi"
 
 const CHUNK_SIZE = BigInt(1_000)
 
@@ -37,7 +37,7 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
   for (const log of logs) {
     try {
       const parsed = decodeEventLog({
-        abi: marketplaceCoreABI,
+        abi: MarketplaceCoreABI,
         topics: log.topics,
         data: log.data,
       })
@@ -111,7 +111,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
   for (const log of logs) {
     try {
       const parsed = decodeEventLog({
-        abi: bidsABI,
+        abi: BidsABI,
         topics: log.topics,
         data: log.data,
       })

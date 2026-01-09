@@ -1,50 +1,49 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
-import { Address, parseEther, erc721Abi } from "viem"
-import { useAccount, useReadContract, useWriteContract } from "wagmi"
-import { nftAbi } from "@/lib/abi"
-import { MARKETPLACE_CONTRACT_ADDRESS, NFT_CONTRACT_ADDRESS, CORE_CONTRACT_ADDRESS } from "@/lib/constants"
-import { useList, useCancelList, useUserTokens } from "./Contract"
+import { useState, useEffect } from "react"
+import { Address, erc721Abi } from "viem"
+import { useAccount, useReadContract, useWriteContract, useReadContracts } from "wagmi"
+import { CORE_CONTRACT_ADDRESS, MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
+import { useList, useMarketplaceListingsIndex, useUserTokens } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
 import { FaSearch } from "react-icons/fa"
 import { ListedNFTSProps, TxState, UserNft } from "@/lib/constants"
-import { useQueryClient } from "@tanstack/react-query"
 import { FiCopy } from "react-icons/fi"
-import { FaExternalLinkAlt, FaHistory } from "react-icons/fa"
+import { FaExternalLinkAlt, FaHistory, FaTimes } from "react-icons/fa"
 import { HiOutlineCollection } from "react-icons/hi"
-import { TbHammer } from "react-icons/tb"
-import { FaInbox } from "react-icons/fa6"
+import { FaInbox, FaGavel } from "react-icons/fa6"
 import { NFTCard } from "./NFTCard"
+import { CollectionLabel } from "./CollectionLabel"
+import { useTx } from "@/app/context/TxContext"
+import { ListCard } from "./ListCard"
+import { MdOutlineLocalOffer } from "react-icons/md"
 
-export default function ListNftWithApproval({ userListings = [], sortBy, sortDir, collections = [] }: ListedNFTSProps) {
-  const [collection, setCollection] = useState<Address | "">(NFT_CONTRACT_ADDRESS)
-  const [txMap, setTxMap] = useState<Record<string, TxState>>({})
-  const [tokenId, setTokenId] = useState<bigint | "">("")
-  const [price, setPrice] = useState<number | string>("")
+export default function ListNftWithApproval({ userListings = [], sortBy, sortDir, collections = [], listings }: ListedNFTSProps) {
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
   const [items, setUserItems] = useState<UserNft[]>([])
-  const [collectionSelected, setCollectionSelected] = useState<string>("")
+  const [collectionSelected, setCollectionSelected] = useState<Address | any>("")
   const [bidsOrItems, setBidsOrItems] = useState<"bids" | "items">("items")
   const [collectionView, setCollectionView] = useState<"inventory" | "colBids" | "tokenBids" | "history">("inventory")
-  const [itemsBatch, setItemsBatch] = useState<UserNft[]>([])
-  const loadingQueryRef = useRef(false)
+  const [listPage, setListPage] = useState<boolean>(false)
+  const [listItemsBatch, setlistItemsBatch] = useState<UserNft[]>([])
+  const [approveColsBatch, setApproveColsBatch] = useState<Address[]>([])
 
-  const queryClient = useQueryClient()
+  const { addTx, updateTx, removeTx } = useTx()
   const { address }: any = useAccount()
   const { writeContractAsync } = useWriteContract()
-  const { list, publicClient } = useList()
-  const { cancelList } = useCancelList()
+  const { publicClient } = useList()
   const collectionsReady = Boolean(collections?.length)
+  const batchCollections = Array.from(new Set(items.map((i) => i.collection)))
 
   const { data: userTokensData, isLoading = true } = useUserTokens(address, collections, collectionsReady)
-
+  const { data: colName } = useReadContract({
+    address: collectionSelected,
+    abi: erc721Abi,
+    functionName: "name",
+  })
   useEffect(() => {
-    console.log(collectionsReady, isLoading)
-
     if (!collectionsReady || isLoading || !userTokensData) return
-    console.log("2 ", userTokensData.tokens)
 
     const listingsMap = new Map(userListings.map((l) => [l.tokenId.toString() + "-" + l.collection.toString(), l]))
 
@@ -53,7 +52,7 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
       const name: string = String(getNFTName(token.collection))
 
       return {
-        id: token.tokenId,
+        tokenId: token.tokenId,
         collection: token.collection,
         listed: Boolean(listing),
         price: listing?.price ?? BigInt(0),
@@ -63,153 +62,69 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
     })
 
     setUserItems(userItems)
+    setlistItemsBatch([])
+    setApproveColsBatch([])
     setStatus("idle")
   }, [isLoading])
-
-  function setTx(tokenId: bigint, patch: Partial<TxState>) {
-    const key = tokenId.toString()
-
-    setTxMap((prev) => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] ?? { txStatus: "idle", action: "none" }),
-        ...patch,
-      },
-    }))
-  }
 
   const setTokenProp = <K extends keyof UserNft>(id: bigint, prop: K, value: UserNft[K] | null) => {
     setUserItems((prev: any) => prev.map((item: any) => (item.id === id ? { ...item, [prop]: value } : item)))
   }
 
-  const { data: isApproved, refetch } = useReadContract({
-    address: collection || undefined,
-    abi: erc721Abi,
-    functionName: "isApprovedForAll",
-    args: collection && address ? [address, CORE_CONTRACT_ADDRESS] : undefined,
+  const { data: approvals, refetch: refetchApprovals } = useReadContracts({
+    contracts: batchCollections.map((col) => ({
+      address: col,
+      abi: erc721Abi,
+      functionName: "isApprovedForAll",
+      args: [address!, CORE_CONTRACT_ADDRESS],
+    })),
     query: {
-      enabled: Boolean(collection && address),
+      enabled: Boolean(address && batchCollections.length),
     },
   })
 
-  const approveCollection = async (id: bigint) => {
+  const approvalMap = batchCollections.reduce<Record<string, boolean>>((acc, col, i) => {
+    acc[col.toLowerCase()] = Boolean(approvals?.[i]?.result)
+    return acc
+  }, {})
+
+  const allApproved = batchCollections.every((col) => approvalMap[col.toLowerCase()])
+
+  const approveCollection = async (collection: Address) => {
     if (!collection) return
-    setTx(id, { txStatus: "waiting", action: "approve" })
+
+    let hash: any
 
     try {
-      const hash = await writeContractAsync({
+      hash = await writeContractAsync({
         address: collection,
         abi: erc721Abi,
         functionName: "setApprovalForAll",
         args: [CORE_CONTRACT_ADDRESS, true],
       })
 
-      setTx(id, { txStatus: "loading", txHash: hash })
+      addTx({ hash, status: "loading", label: "Approving collection" })
 
       const TxReceipt = await publicClient?.waitForTransactionReceipt({
         hash,
       })
 
-      setTx(id, { txStatus: "success" })
+      updateTx(hash, { status: "success" })
+      refetchApprovals()
 
       setTimeout(async () => {
-        await refetch()
-        setTx(id, { txStatus: "idle", action: "none" })
+        removeTx(hash)
       }, 3500)
     } catch (e) {
-      setTx(id, { txStatus: "error" })
+      updateTx(hash, { status: "error" })
       setTimeout(() => {
-        setTx(id, { txStatus: "idle", action: "none" })
+        removeTx(hash)
       }, 3500)
     }
   }
 
-  const handleList = async (e: any, id: bigint) => {
-    if (!collection || tokenId === "" || Number(price) <= 0) return
-    if (e.target.id == "input-price") return
-    setTx(id, { txStatus: "waiting", action: "list" })
-    try {
-      const _price = parseEther(String(price))
-      const hash = await list(Number(id), _price)
-      setTx(id, { txStatus: "loading", txHash: hash })
-
-      const TxReceipt = await publicClient?.waitForTransactionReceipt({
-        hash,
-      })
-
-      setTx(id, { txStatus: "success" })
-      setTimeout(async () => {
-        if (!loadingQueryRef.current) {
-          loadingQueryRef.current = true
-
-          await queryClient.invalidateQueries({ queryKey: ["marketplace-index"] })
-          await queryClient.invalidateQueries({ queryKey: ["user-tokens"] })
-
-          setTimeout(() => {
-            loadingQueryRef.current = false
-          }, 5000)
-        }
-
-        setTokenProp(id, "listed", true)
-        setTokenProp(id, "price", _price)
-        setTx(id, { txStatus: "idle", txHash: undefined, action: "none" })
-        setTokenId("")
-        setPrice("")
-      }, 3500)
-    } catch (e) {
-      setTx(id, { txStatus: "error" })
-      setTimeout(() => {
-        setTx(id, { txStatus: "idle", txHash: undefined, action: "none" })
-        setTokenId("")
-        setPrice("")
-      }, 3500)
-    }
-  }
-
-  const handleDelist = async (id: bigint) => {
-    if (!collection || tokenId === "") return
-    setTx(id, { txStatus: "waiting" })
-    try {
-      const hash = await cancelList(collection, Number(tokenId))
-      setTx(id, { txStatus: "loading", txHash: hash })
-
-      const TxReceipt = await publicClient?.waitForTransactionReceipt({
-        hash,
-      })
-
-      setTx(id, { txStatus: "success", txHash: undefined })
-      setTimeout(async () => {
-        if (!loadingQueryRef.current) {
-          loadingQueryRef.current = true
-
-          await queryClient.invalidateQueries({ queryKey: ["marketplace-index"] })
-          await queryClient.invalidateQueries({ queryKey: ["user-tokens", address] })
-
-          setTimeout(() => {
-            loadingQueryRef.current = false
-          }, 5000)
-        }
-        setTx(id, { txStatus: "idle", txHash: undefined })
-        setTokenProp(id, "listed", false)
-        setTokenId("")
-        setPrice("")
-      }, 3500)
-    } catch (e) {
-      setTx(id, { txStatus: "error" })
-      setTimeout(() => {
-        setTx(id, { txStatus: "idle", txHash: undefined })
-        setTokenId("")
-        setPrice("")
-      }, 3500)
-    }
-  }
-
-  const handleBgClick = (e: any) => {
-    if (e.target.id == "input-price") return
-    if (e.target.id != "list-btn") {
-      setTokenId("")
-      setPrice("")
-    }
+  const handleList = async () => {
+    setListPage(true)
   }
 
   function sortByField<T>(items: T[], getId: (item: T) => bigint, getPrice: (item: T) => bigint) {
@@ -238,25 +153,58 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
 
   const sortedUserItems = sortByField(
     items,
-    (i) => i.id,
+    (i) => i.tokenId,
     (i) => i.price
   )
 
   const copyToClipboard = (value: string) => {
     navigator.clipboard.writeText(value)
   }
-  const addItemToBatch = (item: UserNft) => {
-    setItemsBatch((prev) => [...prev, item])
+  const addItemToBatch = (item: UserNft, dir: string) => {
+    switch (dir) {
+      case "list": {
+        setlistItemsBatch((prev) => [...prev, item])
+        break
+      }
+      case "approve": {
+        setApproveColsBatch((prev) => [...prev, item.collection])
+        break
+      }
+    }
   }
 
-  const removeItemFromBatch = (item: UserNft) => {
-    setItemsBatch((prev) => prev.filter((i) => i.id !== item.id || i.collection !== item.collection))
+  const removeItemFromBatch = (item: UserNft, dir: string) => {
+    switch (dir) {
+      case "list": {
+        setlistItemsBatch((prev) => prev.filter((i) => i.tokenId !== item.tokenId || i.collection !== item.collection))
+        break
+      }
+      case "approve": {
+        setApproveColsBatch((prev) => prev.filter((i) => i !== item.collection))
+        break
+      }
+    }
   }
 
-  const isInBatch = (item: UserNft) => itemsBatch.some((b) => b.id === item.id && b.collection === item.collection)
+  const isInBatch = (item: UserNft, dir: string) => {
+    switch (dir) {
+      case "list": {
+        return listItemsBatch.some((b) => b.tokenId === item.tokenId && b.collection === item.collection)
+        break
+      }
+      case "approve": {
+        return approveColsBatch.some((b) => b === item.collection)
+        break
+      }
+    }
+  }
+
+  const closeListCard = () => {
+    setListPage(false)
+  }
 
   return (
-    <div onClick={handleBgClick} className=" flex flex-col gap-2 w-full">
+    <div className=" flex flex-col gap-2 w-full relative">
       {!address && (
         <div className="w-full flex justify-center">
           <div className="w-50">
@@ -287,16 +235,67 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
               <span>Biddded collections</span>
             </button>
           </div>
-          <div className="flex items-center gap-2 py-2">
-            <label className="flex items-center gap-3 card p-2 rounded w-full border-(--accent)/50 border">
-              <FaSearch className="opacity-50" />
-              <input type="text" className="bg-transparent!" placeholder="Search collection" />
-            </label>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 py-2">
+              <label className="flex items-center gap-3 card p-2 rounded-xl w-full border-(--accent)/50 border">
+                <FaSearch className="opacity-50" />
+                <input type="text" className="bg-transparent!" placeholder="Search collection" />
+              </label>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between px-4">
+                <span>Name</span>
+                <span>Floor</span>
+                <span>Listed</span>
+              </div>
+              <div>
+                <div className="flex flex-col justify-end w-full h-full">
+                  <div
+                    onClick={() => setCollectionSelected("")}
+                    className={
+                      "card hover:cursor-pointer rounded border border-(--accent)/50 flex justify-between px-4 py-2 " + (collectionSelected == "" ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs">All collections</span>
+                    </div>
+                    <div className="flex gap-1 font-bold opacity-75">
+                      <span>{userListings.length ? userListings.length : "-"}</span>
+                      <span>/</span>
+                      <span>{items.length}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {collections.map((col: any) => {
+                const colItems = items.filter((item) => String(item.collection).toLowerCase() == String(col.collection).toLowerCase())
+                const colListings = listings.filter((l) => l.collection == col.collection)
+                return (
+                  <div
+                    key={col.collection}
+                    className={"card rounded border hover:cursor-pointer border-(--accent)/50" + (collectionSelected == col.collection ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")}
+                    onClick={() => setCollectionSelected(col.collection)}
+                  >
+                    <CollectionLabel key={col.collection} collection={{ collection: col.collection, colItems: colItems, colListings: colListings }} />
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
         <div className="flex flex-col py-3 pr-4 grow">
-          <div className="w-full text-start text-2xl font-bold mb-2">
-            <h2>{collectionSelected.length > 0 ? "" : "All collections"}</h2>
+          <div className="w-full flex items-center gap-2 text-start text-2xl font-bold mb-2">
+            <h2>{collectionSelected.length > 0 ? colName : "All collections"}</h2>
+            {collectionSelected.length > 0 && (
+              <div className=" flex gap-2 items-center">
+                <button onClick={() => copyToClipboard(collectionSelected)} className="bg-transparent! hover:opacity-75!">
+                  <FiCopy className=" text-xl" />
+                </button>
+                <a href={`https://sepolia.etherscan.io/token/${collectionSelected}`} target="_blank">
+                  <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
+                </a>
+              </div>
+            )}
           </div>
           <div className=" w-full flex gap-2 border-b border-(--accent)/30 mb-2">
             <button
@@ -310,14 +309,14 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
               onClick={() => setCollectionView("colBids")}
               className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "colBids" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
             >
-              <TbHammer />
+              <FaGavel />
               <span>Collection bids</span>
             </button>
             <button
               onClick={() => setCollectionView("tokenBids")}
               className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "tokenBids" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
             >
-              <TbHammer />
+              <FaGavel />
               <span>Token bids</span>
             </button>
             <button
@@ -332,10 +331,28 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
           {collectionView == "inventory" && (
             <div>
               <div className="w-full py-2 flex gap-2">
-                <button className="rounded flex gap-3 py-1 px-10  border border-(--accent) bg-transparent! text-(--accent)!">
-                  <span>List</span> <span>{itemsBatch.length}</span>
+                <button
+                  onClick={handleList}
+                  className={
+                    "rounded flex gap-3 py-1 px-10  border border-(--accent)  " +
+                    (listItemsBatch.filter((i) => !i.listed).length > 0 ? " bg-(--accent)! text-(--bg-secondary)!" : " bg-transparent! text-(--accent)!")
+                  }
+                  disabled={listItemsBatch.length <= 0}
+                >
+                  <span>List</span> <span>{listItemsBatch.length}</span>
                 </button>
                 <button className="rounded py-1 px-10  border border-(--accent) bg-transparent! text-(--accent)!">Delist</button>
+                {!allApproved && (
+                  <button
+                    onClick={() => approveCollection(approveColsBatch[0])}
+                    className={
+                      "rounded flex gap-3 py-1 px-10  border border-(--accent)  " + (approveColsBatch.length > 0 ? " bg-(--accent)! text-(--bg-secondary)!" : " bg-transparent! text-(--accent)!")
+                    }
+                    disabled={approveColsBatch.length <= 0}
+                  >
+                    <span>Approve</span> <span>{approveColsBatch.length}</span>
+                  </button>
+                )}
               </div>
               {items.length == 0 && !isLoading && (
                 <div className=" flex flex-col items-center justify-center gap-2 p-4">
@@ -352,26 +369,33 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
 
                 {items.length > 0 &&
                   sortedUserItems.map((i, index) => {
-                    const key = i.id.toString()
-                    const tx = txMap[key] ?? { txStatus: "idle" }
-
+                    const key = i.tokenId.toString()
                     return (
-                      <AnimatePresence key={i.id.toString() + i.collection}>
+                      <AnimatePresence key={i.tokenId.toString() + i.collection}>
                         <motion.div
                           initial={{ opacity: 0, scale: 0 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0 }}
                           transition={{ duration: 0.1, delay: index * 0.1 }}
                           onClick={() => {
-                            if (!isInBatch(i)) {
-                              addItemToBatch(i)
+                            if (!isInBatch(i, "list") && !isInBatch(i, "approve")) {
+                              if (approvalMap[String(i.collection).toLowerCase()]) {
+                                addItemToBatch(i, "list")
+                              } else {
+                                addItemToBatch(i, "approve")
+                              }
                             } else {
-                              removeItemFromBatch(i)
+                              if (isInBatch(i, "approve")) {
+                                removeItemFromBatch(i, "approve")
+                              } else {
+                                removeItemFromBatch(i, "list")
+                              }
                             }
                           }}
                           className={
                             " aspect-9/12 min-w-25 relative border-2  hover:border-(--accent) hover:cursor-pointer bg-(--accent) rounded  overflow-hidden text-white " +
-                            (isInBatch(i) ? " border-(--accent)" : "border-(--bg-secondary)")
+                            (isInBatch(i, "list") ? " border-(--accent)! " : " border-(--bg-secondary) ") +
+                            (isInBatch(i, "approve") ? " border-white!" : " border-(--bg-secondary)")
                           }
                         >
                           <NFTCard token={i} />
@@ -384,6 +408,31 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
           )}
         </div>
       </div>
+      <AnimatePresence>
+        {listPage && (
+          <motion.div
+            key={"unique"}
+            initial={{ translateY: "100%" }}
+            animate={{ translateY: 0 }}
+            exit={{ translateY: "100%" }}
+            transition={{ duration: 0.3 }}
+            className=" absolute h-full w-full card left-0 top-0 overflow-y-scroll "
+          >
+            <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
+              <div className="flex items-center gap-3">
+                <MdOutlineLocalOffer className="text-3xl" />
+                <span className="font-bold">List items</span>
+              </div>
+              <button onClick={closeListCard} className="bg-transparent!">
+                <FaTimes className="opacity-75" />
+              </button>
+            </div>
+            <div className="flex w-full ">
+              <ListCard items={listItemsBatch} collections={collections} listings={listings} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

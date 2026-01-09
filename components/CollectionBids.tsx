@@ -17,8 +17,8 @@ export default function CollectionBids({ collectionBids }: any) {
   }, [])
 
   return (
-    <div className="w-full">
-      <table className="w-full border-collapse text-left">
+    <div className="w-full flex">
+      <table className="w-full border-collapse text-left ">
         <thead>
           <tr className="border-b border-(--accent)/60">
             <th className=" p-2">Price</th>

@@ -7,10 +7,14 @@ export const MarketplaceContext = createContext<any>(null)
 
 export function MarketplaceDataProvider({ children }: { children: React.ReactNode }) {
   const info = useMarketplaceInfo()
-  const { data: dataBids } = useMarketplaceBidsIndex(BigInt("9997891"))
-  const { data: dataCore } = useMarketplaceListingsIndex(BigInt("9997891"))
+  const { data: dataBids, triggerRefresh: triggerBidsRefresh } = useMarketplaceBidsIndex(BigInt("9997891"))
+  const { data: dataCore, triggerRefresh: triggerListingsRefresh } = useMarketplaceListingsIndex(BigInt("9997891"))
 
-  return <MarketplaceContext.Provider value={{ info, bidsIndex: dataBids, listingsIndex: dataCore?.listings, collections: dataCore?.collections }}>{children}</MarketplaceContext.Provider>
+  return (
+    <MarketplaceContext.Provider value={{ info, bidsIndex: dataBids, listingsIndex: dataCore?.listings, collections: dataCore?.collections, triggerListingsRefresh, triggerBidsRefresh }}>
+      {children}
+    </MarketplaceContext.Provider>
+  )
 }
 
 export const useMarketplace = () => {

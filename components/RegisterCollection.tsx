@@ -2,19 +2,34 @@
 import { useState } from "react"
 import { useRegisterCollection } from "./Contract"
 import { FaTimes } from "react-icons/fa"
+import { useTx } from "@/app/context/TxContext"
 
 export function RegisterCollection() {
   const [cardOpen, setCardOpen] = useState<boolean>(false)
   const [collectionAddress, setCollectionAddress] = useState<`0x${string}` | string>("")
   const [royaltyFee, setRoyaltyFee] = useState<number | string>("")
-  const { registerCollection } = useRegisterCollection()
+
+  const { addTx, removeTx, updateTx } = useTx()
+  const { registerCollection, publicClient } = useRegisterCollection()
+
   const handleCollectionRegister = async () => {
+    let hash: any
     try {
       const _fee = BigInt(Number(royaltyFee) * 100)
       const _collectionAddress: any = collectionAddress
-      console.log(royaltyFee, _fee, _collectionAddress)
-      const hash = await registerCollection(_collectionAddress, _fee)
-    } catch (e) {}
+      hash = await registerCollection(_collectionAddress, _fee)
+      addTx({ hash, status: "loading", label: "Register collection" })
+      await publicClient?.waitForTransactionReceipt({ hash })
+      updateTx(hash, { status: "success" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    } catch (e) {
+      updateTx(hash, { status: "error" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    }
   }
   return (
     <div className="py-4">

@@ -18,10 +18,8 @@ body.dark {
   --accent: #818cf8;
 }
 
-/* Aplicar colores usando variables */
 body {
   overflow-x: hidden;
-  font-family: Arial, Helvetica, sans-serif;
   background-color: var(--bg);
   color: var(--text);
 }
