@@ -36,6 +36,7 @@ export type ListedNft = {
   tokenId: bigint
   price: bigint
   createdAtBlock: bigint
+  priceEth: string | number
 }
 
 export type UserNft = {
