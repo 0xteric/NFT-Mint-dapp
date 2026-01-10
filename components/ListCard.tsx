@@ -15,7 +15,6 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
   const [totalEstimated, setTotalEstimated] = useState<number>(0)
   const [totalRoyalties, setTotalRoyalties] = useState<number>(0)
   const [totalMarketplaceFee, setTotalMarketplaceFee] = useState<number>(0)
-  const [prices, setPrices] = useState<bigint[]>([])
   const { info, triggerListingsRefresh } = useMarketplace()
   const { list, publicClient } = useList()
   const { listBatch } = useListBatch()
@@ -166,7 +165,6 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
           const name: any = !isLoading && names?.length ? names[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
           const colData: any =
             !isLoadingCore && colsData?.length ? colsData[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
-          setPrices((prev) => [...prev, i.price ? i.price : BigInt(0)])
           return (
             <div className="flex items-center px-6 justify-between w-full p-2 border-b border-(--accent)/30" key={index}>
               <div className="flex flex-2 items-center gap-3">
