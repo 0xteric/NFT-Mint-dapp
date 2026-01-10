@@ -17,7 +17,6 @@ export function BuyCard({ buyItemsBatch, collections, names, removeItemFromBatch
       if (buyItemsBatch.length > 1) {
         const value = buyItemsBatch.reduce((value: bigint, i: ListedNft) => value + i.price, BigInt(0))
         const tokenIds = buyItemsBatch.map((i: ListedNft) => i.tokenId)
-        console.log(value, tokenIds)
         hash = await buyBatch(collectionSelected, tokenIds, value)
         addTx({ hash, status: "loading", label: "Buying items" })
       } else {
@@ -43,11 +42,11 @@ export function BuyCard({ buyItemsBatch, collections, names, removeItemFromBatch
   return (
     <motion.div
       key={"unique"}
-      initial={{ translateY: "100%" }}
+      initial={{ translateY: "-100%" }}
       animate={{ translateY: 0 }}
-      exit={{ translateY: "100%" }}
+      exit={{ translateY: "-100%" }}
       transition={{ duration: 0.3 }}
-      className=" absolute h-full w-full card left-0 top-0 overflow-y-scroll "
+      className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
     >
       <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
         <div className="flex items-center gap-3">

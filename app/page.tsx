@@ -62,21 +62,21 @@ export default function Home() {
         <div className="flex items-center justify-start w-full gap-4 text-(--accent) opacity-75 font-bold">
           <div>
             <span className="  text-(--accent)/75">Total volume: </span>
-            {(Number(info.totalVolume) / 1e18).toFixed(2) + " ETH"}
+            {(info ? (Number(info.totalVolume) / 1e18).toFixed(2) : "-") + " ETH"}
           </div>
 
           <div>
             <span className="  text-(--accent)/75">Total sales: </span>
-            {Number(info.totalSales)}
+            {info ? Number(info.totalSales) : "-"}
           </div>
           <div>
             <span className="  text-(--accent)/75">Marketplace fee: </span>
-            {Number(info.marketplaceFee) / 100 + "%"}
+            {(info ? Number(info.marketplaceFee) / 100 : "-") + "%"}
           </div>
         </div>
-        <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full overflow-hidden">
-          <div className="border-b border-(--accent)/50">
-            <div className="flex justify-between items-center">
+        <div className="card bg-(--bg-secondary) border border-(--accent)/20 rounded w-full overflow-hidden  ">
+          <div className="border-b bg-(--bg-secondary) border-(--accent)/50 relative z-20">
+            <div className="flex justify-between items-center ">
               <div className="flex">
                 <button
                   onClick={() => setPageCard("marketplace")}
@@ -92,14 +92,6 @@ export default function Home() {
                   <FaUser />
                   <span className="hidden md:block">Portfolio</span>
                 </button>
-                <button
-                  onClick={() => setPageCard("collectionBids")}
-                  className={"flex gap-2 items-center p-4  text-(--accent)! hover:opacity-100! transition-all duration-300  bg-transparent!  " + (pageCard == "collectionBids" ? " " : "opacity-50")}
-                >
-                  <FaGavel />
-                  <span className="hidden md:block">Bids</span>
-                </button>
-                <div className="border-l border-(--accent)/20"></div>
               </div>
             </div>
           </div>
@@ -107,6 +99,7 @@ export default function Home() {
             {pageCard == "marketplace" && (
               <div>
                 <ListedNFTS
+                  tokenBids={bidsIndex ? bidsIndex.tokenBids : []}
                   collectionBids={bidsIndex ? bidsIndex.collectionBids : []}
                   listings={listingsIndex ? listingsIndex : []}
                   userListings={userListings}
@@ -119,6 +112,7 @@ export default function Home() {
             {pageCard == "user" && (
               <div>
                 <ListNftWithApproval
+                  tokenBids={bidsIndex ? bidsIndex.tokenBids : []}
                   collectionBids={bidsIndex ? bidsIndex.collectionBids : []}
                   collections={collections}
                   listings={[]}

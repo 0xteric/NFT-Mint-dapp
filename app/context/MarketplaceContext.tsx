@@ -11,7 +11,19 @@ export function MarketplaceDataProvider({ children }: { children: React.ReactNod
   const { data: dataCore, triggerRefresh: triggerListingsRefresh } = useMarketplaceListingsIndex(BigInt("9997891"))
 
   return (
-    <MarketplaceContext.Provider value={{ info, bidsIndex: dataBids, listingsIndex: dataCore?.listings, collections: dataCore?.collections, triggerListingsRefresh, triggerBidsRefresh }}>
+    <MarketplaceContext.Provider
+      value={{
+        info,
+        bidsIndex: dataBids,
+        listingsIndex: dataCore?.listings,
+        listingEvents: dataCore?.listingEvents,
+        tokenBidEvents: dataBids?.tokenBidEvents,
+        collectionBidEvents: dataBids?.collectionBidEvents,
+        collections: dataCore?.collections,
+        triggerListingsRefresh,
+        triggerBidsRefresh,
+      }}
+    >
       {children}
     </MarketplaceContext.Provider>
   )

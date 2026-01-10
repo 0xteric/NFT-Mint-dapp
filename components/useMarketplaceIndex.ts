@@ -33,6 +33,7 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
   const logs = await getLogs(publicClient, fromBlock, CORE_CONTRACT_ADDRESS)
 
   const listings = new Map<string, any>()
+  const listingEvents = new Map<string, any>()
   const collections = new Map<string, any>()
   for (const log of logs) {
     try {
@@ -41,7 +42,6 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
         topics: log.topics,
         data: log.data,
       })
-      console.log(parsed)
 
       switch (parsed.eventName) {
         case "ListingCreated": {
@@ -56,6 +56,7 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
             createdAtBlock: log.blockNumber,
             updatedAtBlock: log.blockNumber,
           })
+          listingEvents.set(`${id}-${parsed.eventName}`, { ...listings.get(id), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Listing Created" })
           break
         }
 
@@ -66,6 +67,7 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
             listing.status = "CANCELLED"
             listing.updatedAtBlock = log.blockNumber
           }
+          listingEvents.set(`${id}-${parsed.eventName}`, { ...listings.get(id), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Listing Cancelled" })
           break
         }
 
@@ -75,7 +77,9 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
           if (listing) {
             listing.status = "SOLD"
             listing.updatedAtBlock = log.blockNumber
+            listing.buyer = parsed.args.buyer
           }
+          listingEvents.set(`${id}-${parsed.eventName}`, { ...listings.get(id), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Listing Sold" })
           break
         }
 
@@ -98,6 +102,7 @@ export async function indexMarketplaceListings(publicClient: any, fromBlock: big
 
   return {
     listings: Array.from(listings.values()),
+    listingEvents: Array.from(listingEvents.values()),
     collections: Array.from(collections.values()),
   }
 }
@@ -106,7 +111,9 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
   const logs = await getLogs(publicClient, fromBlock, BIDS_CONTRACT_ADDRESS)
 
   const tokenBids = new Map<string, any>()
+  const tokenBidEvents = new Map<string, any>()
   const collectionBids = new Map<string, any>()
+  const collectionBidEvents = new Map<string, any>()
 
   for (const log of logs) {
     try {
@@ -115,7 +122,6 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
         topics: log.topics,
         data: log.data,
       })
-
       switch (parsed.eventName) {
         case "TokenBidCreated": {
           const key = `${parsed.args.collection}-${parsed.args.tokenId}-${parsed.args.bidder}`
@@ -128,6 +134,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
             createdAtBlock: log.blockNumber,
             updatedAtBlock: log.blockNumber,
           })
+          tokenBidEvents.set(`${key}-${parsed.eventName}`, { ...tokenBids.get(key), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Token Bid Created" })
           break
         }
 
@@ -138,6 +145,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
             tokenBid.status = "SOLD"
             tokenBid.updatedAtBlock = log.blockNumber
           }
+          tokenBidEvents.set(`${key}-${parsed.eventName}`, { ...tokenBids.get(key), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Token Bid Cancelled" })
           break
         }
 
@@ -152,6 +160,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
             createdAtBlock: log.blockNumber,
             updatedAtBlock: log.blockNumber,
           })
+          collectionBidEvents.set(`${key}-${parsed.eventName}`, { ...collectionBids.get(key), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Collection Bid Created" })
           break
         }
 
@@ -162,6 +171,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
             collectionBid.status = "SOLD"
             collectionBid.updatedAtBlock = log.blockNumber
           }
+          collectionBidEvents.set(`${key}-${parsed.eventName}`, { ...collectionBids.get(key), createdAt: log.blockTimestamp, txHash: log.transactionHash, eventName: "Collection Bid Cancelled" })
           break
         }
 
@@ -173,10 +183,12 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
           if (tokenBid) {
             tokenBid.status = "SOLD"
             tokenBid.updatedAtBlock = log.blockNumber
+            tokenBidEvents.set(`${key2}-${parsed.eventName}`, { ...tokenBids.get(key2), createdAtBlock: log.blockNumber, txHash: log.transactionHash, eventName: "Token Bid Sold" })
           }
           if (collectionBid && collectionBid.price == parsed.args.price) {
-            tokenBid.status = "SOLD"
-            tokenBid.updatedAtBlock = log.blockNumber
+            collectionBid.status = "SOLD"
+            collectionBid.updatedAtBlock = log.blockNumber
+            collectionBidEvents.set(`${key2}-${parsed.eventName}`, { ...collectionBids.get(key2), createdAtBlock: log.blockNumber, txHash: log.transactionHash, eventName: "Collection Bid Sold" })
           }
           break
         }
@@ -187,5 +199,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
   return {
     tokenBids: Array.from(tokenBids.values()),
     collectionBids: Array.from(collectionBids.values()),
+    collectionBidEvents: Array.from(collectionBidEvents.values()),
+    tokenBidEvents: Array.from(tokenBidEvents.values()),
   }
 }

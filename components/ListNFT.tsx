@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react"
 import { Address, erc721Abi } from "viem"
 import { useAccount, useReadContract, useWriteContract, useReadContracts } from "wagmi"
-import { CORE_CONTRACT_ADDRESS, MARKETPLACE_CONTRACT_ADDRESS } from "@/lib/constants"
+import { CORE_CONTRACT_ADDRESS, SortBy, SortDir } from "@/lib/constants"
 import { useList, useMarketplaceListingsIndex, useUserTokens } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
 import { FaSearch } from "react-icons/fa"
 import { ListedNFTSProps, TxState, UserNft } from "@/lib/constants"
-import { FiCopy } from "react-icons/fi"
+import { FiActivity, FiCopy } from "react-icons/fi"
 import { FaExternalLinkAlt, FaHistory, FaTimes } from "react-icons/fa"
 import { HiOutlineCollection } from "react-icons/hi"
 import { FaInbox, FaGavel } from "react-icons/fa6"
@@ -18,16 +18,22 @@ import { CollectionLabel } from "./CollectionLabel"
 import { useTx } from "@/app/context/TxContext"
 import { ListCard } from "./ListCard"
 import { MdOutlineLocalOffer } from "react-icons/md"
+import CollectionBids from "./CollectionBids"
+import TokenBids from "./TokenBids"
+import History from "./Hirstory"
 
-export default function ListNftWithApproval({ userListings = [], sortBy, sortDir, collections = [], listings }: ListedNFTSProps) {
+export default function ListNftWithApproval({ userListings = [], collections = [], listings, collectionBids, tokenBids }: ListedNFTSProps) {
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
   const [items, setUserItems] = useState<UserNft[]>([])
   const [collectionSelected, setCollectionSelected] = useState<Address | any>("")
   const [bidsOrItems, setBidsOrItems] = useState<"bids" | "items">("items")
   const [collectionView, setCollectionView] = useState<"inventory" | "colBids" | "tokenBids" | "history">("inventory")
   const [listPage, setListPage] = useState<boolean>(false)
+  const [historyPage, setHistoryPage] = useState<boolean>(false)
   const [listItemsBatch, setlistItemsBatch] = useState<UserNft[]>([])
   const [approveColsBatch, setApproveColsBatch] = useState<Address[]>([])
+  const [sortBy, setSortBy] = useState<SortBy>("price")
+  const [sortDir, setSortDir] = useState<SortDir>("asc")
 
   const { addTx, updateTx, removeTx } = useTx()
   const { address }: any = useAccount()
@@ -41,6 +47,16 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
     address: collectionSelected,
     abi: erc721Abi,
     functionName: "name",
+  })
+  const { data: names } = useReadContracts({
+    contracts: collections.map((col) => ({
+      address: col.collection,
+      abi: erc721Abi,
+      functionName: "name",
+    })),
+    query: {
+      enabled: Boolean(collections.length),
+    },
   })
   useEffect(() => {
     if (!collectionsReady || isLoading || !userTokensData) return
@@ -66,10 +82,6 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
     setApproveColsBatch([])
     setStatus("idle")
   }, [isLoading])
-
-  const setTokenProp = <K extends keyof UserNft>(id: bigint, prop: K, value: UserNft[K] | null) => {
-    setUserItems((prev: any) => prev.map((item: any) => (item.id === id ? { ...item, [prop]: value } : item)))
-  }
 
   const { data: approvals, refetch: refetchApprovals } = useReadContracts({
     contracts: batchCollections.map((col) => ({
@@ -139,11 +151,7 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
 
   function getNFTName(collection: Address) {
     try {
-      const { data: name } = useReadContract({
-        address: collection,
-        abi: erc721Abi,
-        functionName: "name",
-      })
+      names[collections.findIndex((col) => String(col.collection) == String(collection))].result
       return name
     } catch (e) {
       console.log(e)
@@ -226,13 +234,19 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
             </a>
           </div>
           <div className="flex gap-4 mt-2 border-b border-(--accent)/30">
-            <button onClick={() => setBidsOrItems("items")} className={"flex items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}>
+            <button
+              onClick={() => setBidsOrItems("items")}
+              className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+            >
               <HiOutlineCollection />
-              <span>Owned collections</span>
+              <span>Owned </span>
             </button>
-            <button onClick={() => setBidsOrItems("bids")} className={"flex items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}>
+            <button
+              onClick={() => setBidsOrItems("bids")}
+              className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+            >
               <HiOutlineCollection />
-              <span>Biddded collections</span>
+              <span>Biddded </span>
             </button>
           </div>
           <div className="flex flex-col gap-3">
@@ -284,7 +298,7 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
           </div>
         </div>
         <div className="flex flex-col py-3 pr-4 grow">
-          <div className="w-full flex items-center gap-2 text-start text-2xl font-bold mb-2">
+          <div className="w-full flex items-center gap-2 text-start text-2xl font-bold justify-between mb-2">
             <h2>{collectionSelected.length > 0 ? colName : "All collections"}</h2>
             {collectionSelected.length > 0 && (
               <div className=" flex gap-2 items-center">
@@ -296,6 +310,9 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
                 </a>
               </div>
             )}
+            <button onClick={() => setHistoryPage(true)} className={"flex bg-transparent! text-(--text-secondary)! items-center gap-2 rounded p-2 "}>
+              <FaHistory />
+            </button>
           </div>
           <div className=" w-full flex gap-2 border-b border-(--accent)/30 mb-2">
             <button
@@ -318,13 +335,6 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
             >
               <FaGavel />
               <span>Token bids</span>
-            </button>
-            <button
-              onClick={() => setCollectionView("history")}
-              className={"flex items-center gap-2 bg-transparent! border-b p-2 " + (collectionView == "history" ? " text-(--accent)! " : "text-(--text)/80! border-transparent!")}
-            >
-              <FaHistory />
-              <span>History</span>
             </button>
           </div>
 
@@ -406,17 +416,32 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
               </div>
             </div>
           )}
+          {collectionView == "colBids" && (
+            <div>
+              <CollectionBids collectionBids={collectionBids} />
+            </div>
+          )}
+          {collectionView == "tokenBids" && (
+            <div>
+              <TokenBids tokenBids={tokenBids} />
+            </div>
+          )}
+          {collectionView == "history" && (
+            <div>
+              <History />
+            </div>
+          )}
         </div>
       </div>
       <AnimatePresence>
         {listPage && (
           <motion.div
             key={"unique"}
-            initial={{ translateY: "100%" }}
+            initial={{ translateY: "-100%" }}
             animate={{ translateY: 0 }}
-            exit={{ translateY: "100%" }}
+            exit={{ translateY: "-100%" }}
             transition={{ duration: 0.3 }}
-            className=" absolute h-full w-full card left-0 top-0 overflow-y-scroll "
+            className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
           >
             <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
               <div className="flex items-center gap-3">
@@ -430,6 +455,32 @@ export default function ListNftWithApproval({ userListings = [], sortBy, sortDir
             <div className="flex w-full ">
               <ListCard items={listItemsBatch} collections={collections} listings={listings} />
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {historyPage && (
+          <motion.div
+            key={"unique"}
+            initial={{ translateY: "-100%" }}
+            animate={{ translateY: 0 }}
+            exit={{ translateY: "-100%" }}
+            transition={{ duration: 0.3 }}
+            className=" absolute h-fit w-full card  left-0 top-0  z-10"
+          >
+            <div className="px-4 flex justify-between w-full  relative text-2xl">
+              <div className="flex justify-between py-4">
+                <div className="flex text-xl items-center gap-3">
+                  <FiActivity />
+
+                  <h2 className="font-bold ">Activity</h2>
+                </div>
+              </div>
+              <button onClick={() => setHistoryPage(false)} className="bg-transparent!">
+                <FaTimes className="opacity-75" />
+              </button>
+            </div>
+            <History />
           </motion.div>
         )}
       </AnimatePresence>

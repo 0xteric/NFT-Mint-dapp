@@ -2,10 +2,11 @@ import type { Metadata } from "next"
 import { Address } from "viem"
 
 export const NFT_CONTRACT_ADDRESS = "0x1C7607fa0a271605bdc2293B2b9E589e71D9c9e8"
-export const MARKETPLACE_CONTRACT_ADDRESS = "0x74f3666388E7fE7897f885300C4a26e9DD950786"
-export const CORE_CONTRACT_ADDRESS = "0x44b4EFFE314f17729A3Db370aa5161A8C2D606aC"
-export const PAYMENTS_CONTRACT_ADDRESS = "0x4A3B39683d84373ef9026c0C334D285812280CD9"
-export const BIDS_CONTRACT_ADDRESS = "0x37F63267072285820217616D67Bcb63191534782"
+
+export const MARKETPLACE_CONTRACT_ADDRESS = "0x83f3c59C3D44f11C7ba262D01d24Cf1E32117246"
+export const BIDS_CONTRACT_ADDRESS = "0x14f3F097C85F1cB1bB3EE72Cf55731f81b8A42Fd"
+export const CORE_CONTRACT_ADDRESS = "0x3613128fAA9f1bb8DF769D60ad5CfbBc85C59d54"
+export const PAYMENTS_CONTRACT_ADDRESS = "0xF26E73d620251752782B351424D5EC749c5007e9"
 
 export const metadata: Metadata = {
   title: "SUP!",
@@ -59,6 +60,7 @@ export type ListedNFTSProps = {
   refetchTotalSales: any
   collections: any[]
   collectionBids: any[]
+  tokenBids: any[]
 }
 
 export type SortBy = "id" | "price"

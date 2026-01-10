@@ -72,7 +72,6 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
       const collections = listItems.map((i) => i.collection)
       const tokenIds = listItems.map((i) => i.tokenId)
       const prices = listItems.map((i) => i.price)
-      console.log(collections, tokenIds, prices)
       if (listItems.length > 1) {
         hash = await listBatch(collections, tokenIds, prices)
         addTx({ hash, status: "loading", label: "Listing batch" })
