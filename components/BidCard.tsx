@@ -30,13 +30,13 @@ export function BidCard({ bidItemsBatch = [], collections, names, removeItemFrom
       }
 
       await publicClient?.waitForTransactionReceipt({ hash })
-      updateTx(hash, { status: "success" })
+      updateTx(hash, { status: "success", label: bidItemsBatch.length > 1 ? "Bids placed!" : "Bid placed!" })
       triggerBidsRefresh()
       setTimeout(() => {
         removeTx(hash)
       }, 3500)
     } catch (e) {
-      updateTx(hash, { status: "error" })
+      updateTx(hash, { status: "error", label: "Biding error!" })
       console.log(e)
       setTimeout(() => {
         removeTx(hash)

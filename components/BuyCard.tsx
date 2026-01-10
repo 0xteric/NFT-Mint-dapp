@@ -25,13 +25,13 @@ export function BuyCard({ buyItemsBatch, collections, names, removeItemFromBatch
       }
 
       await publicClient?.waitForTransactionReceipt({ hash })
-      updateTx(hash, { status: "success" })
+      updateTx(hash, { status: "success", label: "Bought!" })
       triggerListingsRefresh()
       setTimeout(() => {
         removeTx(hash)
       }, 3500)
     } catch (e) {
-      updateTx(hash, { status: "error" })
+      updateTx(hash, { status: "error", label: "Buying error!" })
       console.log(e)
       setTimeout(() => {
         removeTx(hash)

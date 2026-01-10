@@ -4,11 +4,11 @@ import { useState, useEffect } from "react"
 import { Address, erc721Abi } from "viem"
 import { useAccount, useReadContract, useWriteContract, useReadContracts } from "wagmi"
 import { CORE_CONTRACT_ADDRESS, SortBy, SortDir } from "@/lib/constants"
-import { useList, useMarketplaceListingsIndex, useUserTokens } from "./Contract"
+import { useList, useUserTokens, useCancelList, useCancelCollectionBid, useCancelListBatch, useCancelTokenBid, useCancelTokenBidBatch } from "./Contract"
 import { motion, AnimatePresence } from "framer-motion"
 import ConnectWallet from "./ConnectWallet"
 import { FaSearch } from "react-icons/fa"
-import { ListedNFTSProps, TxState, UserNft } from "@/lib/constants"
+import { ListedNFTSProps, UserNft } from "@/lib/constants"
 import { FiActivity, FiCopy } from "react-icons/fi"
 import { FaExternalLinkAlt, FaHistory, FaTimes } from "react-icons/fa"
 import { HiOutlineCollection } from "react-icons/hi"
@@ -21,7 +21,7 @@ import { MdOutlineLocalOffer } from "react-icons/md"
 import CollectionBids from "./CollectionBids"
 import TokenBids from "./TokenBids"
 import History from "./Hirstory"
-import { IoIosArrowForward } from "react-icons/io"
+import { useMarketplace } from "@/app/context/MarketplaceContext"
 
 export default function ListNftWithApproval({ userListings = [], collections = [], listings, collectionBids, tokenBids }: ListedNFTSProps) {
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
@@ -32,18 +32,27 @@ export default function ListNftWithApproval({ userListings = [], collections = [
   const [listPage, setListPage] = useState<boolean>(false)
   const [historyPage, setHistoryPage] = useState<boolean>(false)
   const [listItemsBatch, setlistItemsBatch] = useState<UserNft[]>([])
+  const [delistItemsBatch, setdelistItemsBatch] = useState<UserNft[]>([])
   const [approveColsBatch, setApproveColsBatch] = useState<Address[]>([])
+  const [cancelTokenBidItemsBatch, setCancelTokenBidItemsBatch] = useState<UserNft[]>([])
   const [sortBy, setSortBy] = useState<SortBy>("price")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [showColsCard, setShowColsCard] = useState<boolean>(false)
+  const { cancelListBatch } = useCancelListBatch()
+  const { cancelList } = useCancelList()
+  const { cancelCollectionBid } = useCancelCollectionBid()
+  const { cancelTokenBid } = useCancelTokenBid()
+  const { cancelTokenBidBatch } = useCancelTokenBidBatch()
   const { addTx, updateTx, removeTx } = useTx()
   const { address }: any = useAccount()
   const { writeContractAsync } = useWriteContract()
   const { publicClient } = useList()
+
   const collectionsReady = Boolean(collections?.length)
   const batchCollections = Array.from(new Set(items.map((i) => i.collection)))
 
-  const { data: userTokensData, isLoading = true } = useUserTokens(address, collections, collectionsReady)
+  const { data: userTokensData, isLoading = true, refetch: refetchUserTokens } = useUserTokens(address, collections, collectionsReady)
+  const { triggerListingsRefresh, triggerBidsRefresh } = useMarketplace()
   const { data: colName } = useReadContract({
     address: collectionSelected,
     abi: erc721Abi,
@@ -60,6 +69,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
     },
   })
   useEffect(() => {
+    console.log(!collectionsReady || isLoading || !userTokensData, userListings, listings)
     if (!collectionsReady || isLoading || !userTokensData) return
 
     const listingsMap = new Map(userListings.map((l) => [l.tokenId.toString() + "-" + l.collection.toString(), l]))
@@ -80,9 +90,10 @@ export default function ListNftWithApproval({ userListings = [], collections = [
 
     setUserItems(userItems)
     setlistItemsBatch([])
+    setdelistItemsBatch([])
     setApproveColsBatch([])
     setStatus("idle")
-  }, [isLoading])
+  }, [isLoading, userListings])
 
   const { data: approvals, refetch: refetchApprovals } = useReadContracts({
     contracts: batchCollections.map((col) => ({
@@ -139,6 +150,61 @@ export default function ListNftWithApproval({ userListings = [], collections = [
   const handleList = async () => {
     setListPage(true)
   }
+  const handleDelist = async () => {
+    if (!delistItemsBatch.length) return
+    let hash: any
+    try {
+      if (delistItemsBatch.length > 1) {
+        hash = await cancelListBatch(
+          delistItemsBatch.map((c) => c.collection),
+          delistItemsBatch.map((c) => c.tokenId)
+        )
+        addTx({ hash, status: "loading", label: "Delisting items" })
+      } else {
+        hash = await cancelList(delistItemsBatch[0].collection, Number(delistItemsBatch[0].tokenId))
+        addTx({ hash, status: "loading", label: "Delisting item" })
+      }
+      await publicClient?.waitForTransactionReceipt({ hash })
+      triggerListingsRefresh()
+      updateTx(hash, { status: "success", label: "Delisted!" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    } catch (e) {
+      updateTx(hash, { status: "error", label: "Delisting error!" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    }
+  }
+
+  const handleCancelTokenBid = async () => {
+    if (!cancelTokenBidItemsBatch.length) return
+    let hash: any
+    try {
+      if (cancelTokenBidItemsBatch.length > 1) {
+        hash = await cancelTokenBidBatch(
+          cancelTokenBidItemsBatch.map((c) => c.collection),
+          cancelTokenBidItemsBatch.map((c) => c.tokenId)
+        )
+        addTx({ hash, status: "loading", label: "Canceling token bids" })
+      } else {
+        hash = await cancelTokenBid(cancelTokenBidItemsBatch[0].collection, Number(cancelTokenBidItemsBatch[0].tokenId))
+        addTx({ hash, status: "loading", label: "Canceling token bid" })
+      }
+      await publicClient?.waitForTransactionReceipt({ hash })
+      triggerListingsRefresh()
+      updateTx(hash, { status: "success", label: "Cancelled!" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    } catch (e) {
+      updateTx(hash, { status: "error", label: "Canceling error!" })
+      setTimeout(() => {
+        removeTx(hash)
+      }, 3500)
+    }
+  }
 
   function sortByField<T>(items: T[], getId: (item: T) => bigint, getPrice: (item: T) => bigint) {
     return [...items].sort((a, b) => {
@@ -152,7 +218,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
 
   function getNFTName(collection: Address) {
     try {
-      names[collections.findIndex((col) => String(col.collection) == String(collection))].result
+      const name = names ? names[collections.findIndex((col) => String(col.collection) == String(collection))].result : "-"
       return name
     } catch (e) {
       console.log(e)
@@ -163,7 +229,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
   const sortedUserItems = sortByField(
     items,
     (i) => i.tokenId,
-    (i) => i.price
+    (i) => i.price || BigInt(0)
   )
 
   const copyToClipboard = (value: string) => {
@@ -179,6 +245,10 @@ export default function ListNftWithApproval({ userListings = [], collections = [
         setApproveColsBatch((prev) => [...prev, item.collection])
         break
       }
+      case "delist": {
+        setdelistItemsBatch((prev) => [...prev, item])
+        break
+      }
     }
   }
 
@@ -186,6 +256,10 @@ export default function ListNftWithApproval({ userListings = [], collections = [
     switch (dir) {
       case "list": {
         setlistItemsBatch((prev) => prev.filter((i) => i.tokenId !== item.tokenId || i.collection !== item.collection))
+        break
+      }
+      case "delist": {
+        setdelistItemsBatch((prev) => prev.filter((i) => i.tokenId !== item.tokenId || i.collection !== item.collection))
         break
       }
       case "approve": {
@@ -205,6 +279,10 @@ export default function ListNftWithApproval({ userListings = [], collections = [
         return approveColsBatch.some((b) => b === item.collection)
         break
       }
+      case "delist": {
+        return delistItemsBatch.some((b) => b.tokenId === item.tokenId && b.collection === item.collection)
+        break
+      }
     }
   }
 
@@ -218,14 +296,14 @@ export default function ListNftWithApproval({ userListings = [], collections = [
         <div
           className={
             "flex flex-1 flex-row w-full lg:w-fit  lg:relative absolute transition-all duration-200 lg:translate-y-0 -translate-y-full lg:scale-y-100  z-10 " +
-            (showColsCard ? " scale-y-100 translate-y-0 " : " scale-y-0 ")
+            (showColsCard ? " scale-y-100 translate-y-0 border-b border-(--accent)/50 " : " scale-y-0 ")
           }
         >
           <div className=" bg-(--bg-secondary) w-full lg:rounded-none! overflow-hidden   border-(--accent)/50 lg:border-r    ">
             <div className="flex flex-col lg:bg-(--accent)/20 h-full   ">
               <div className="flex items-center justify-between">
                 <div className="flex gap-2 items-center  px-4 pt-4">
-                  <h2 className="text-xl font-bold">
+                  <h2 className="text-xl px-6 font-bold">
                     {address?.slice(0, 5)}...{address?.slice(-5)}
                   </h2>
                   <button onClick={() => copyToClipboard(address)} className="bg-transparent!  hover:opacity-75!">
@@ -243,14 +321,14 @@ export default function ListNftWithApproval({ userListings = [], collections = [
               <div className="flex gap-4 mt-2 border-b border-(--accent)/30  px-4">
                 <button
                   onClick={() => setBidsOrItems("items")}
-                  className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+                  className={"flex grow items-center justify-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
                 >
                   <HiOutlineCollection />
                   <span>Owned </span>
                 </button>
                 <button
                   onClick={() => setBidsOrItems("bids")}
-                  className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+                  className={"flex grow justify-center items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
                 >
                   <HiOutlineCollection />
                   <span>Biddded </span>
@@ -374,7 +452,14 @@ export default function ListNftWithApproval({ userListings = [], collections = [
                 >
                   <span>List</span> <span>{listItemsBatch.length}</span>
                 </button>
-                <button className="rounded py-1 px-10  border border-(--accent) bg-transparent! text-(--accent)!">Delist</button>
+                <button
+                  onClick={handleDelist}
+                  className={
+                    "rounded flex gap-3 py-1 px-10  border border-(--accent)  " + (delistItemsBatch.length > 0 ? " bg-(--accent)! text-(--bg-secondary)!" : " bg-transparent! text-(--accent)!")
+                  }
+                >
+                  <span>Delist</span> <span>{delistItemsBatch.length}</span>
+                </button>
                 {!allApproved && (
                   <button
                     onClick={() => approveCollection(approveColsBatch[0])}
@@ -418,26 +503,49 @@ export default function ListNftWithApproval({ userListings = [], collections = [
                           exit={{ opacity: 0, scale: 0 }}
                           transition={{ duration: 0.1, delay: index * 0.1 }}
                           onClick={() => {
-                            if (!isInBatch(i, "list") && !isInBatch(i, "approve")) {
+                            if (!isInBatch(i, "list") && !isInBatch(i, "approve") && !isInBatch(i, "delist")) {
                               if (approvalMap[String(i.collection).toLowerCase()]) {
-                                addItemToBatch(i, "list")
+                                if (i.listed) {
+                                  addItemToBatch(i, "delist")
+                                } else {
+                                  addItemToBatch(i, "list")
+                                }
                               } else {
                                 addItemToBatch(i, "approve")
                               }
                             } else {
                               if (isInBatch(i, "approve")) {
                                 removeItemFromBatch(i, "approve")
-                              } else {
+                              } else if (isInBatch(i, "list")) {
                                 removeItemFromBatch(i, "list")
+                              } else if (isInBatch(i, "delist")) {
+                                removeItemFromBatch(i, "delist")
                               }
                             }
                           }}
                           className={
                             " aspect-9/12 min-w-25 relative border-2  hover:border-(--accent) hover:cursor-pointer bg-(--accent) rounded  overflow-hidden text-white " +
                             (isInBatch(i, "list") ? " border-(--accent)! " : " border-(--bg-secondary) ") +
-                            (isInBatch(i, "approve") ? " border-white!" : " border-(--bg-secondary)")
+                            (isInBatch(i, "approve") ? " border-white! " : " border-(--bg-secondary)") +
+                            (isInBatch(i, "delist") ? " border-[#c19137]! " : " border-(--bg-secondary) ")
                           }
                         >
+                          {(isInBatch(i, "list") || isInBatch(i, "delist") || isInBatch(i, "approve")) && (
+                            <div
+                              className={
+                                "  bg-(--bg-secondary)  rounded text-xs border absolute left-4 top-3 " +
+                                (isInBatch(i, "list") ? " border-(--accent)! text-(--accent)! " : " border-(--bg-secondary) ") +
+                                (isInBatch(i, "approve") ? " border-white! text-white!" : " border-(--bg-secondary)") +
+                                (isInBatch(i, "delist") ? " border-[#c19137] text-[#c19137]! " : " border-(--bg-secondary) ")
+                              }
+                            >
+                              <span className="p-2 ">
+                                {isInBatch(i, "list") && "LIST"}
+                                {isInBatch(i, "delist") && "DELIST"}
+                                {isInBatch(i, "approve") && "APPROVE"}
+                              </span>
+                            </div>
+                          )}
                           <NFTCard token={i} />
                         </motion.div>
                       </AnimatePresence>
@@ -448,17 +556,18 @@ export default function ListNftWithApproval({ userListings = [], collections = [
           )}
           {collectionView == "colBids" && (
             <div>
-              <CollectionBids collectionBids={collectionBids} />
+              <CollectionBids allBids={false} collectionBids={collectionBids} />
             </div>
           )}
           {collectionView == "tokenBids" && (
             <div>
-              <TokenBids tokenBids={tokenBids} />
-            </div>
-          )}
-          {collectionView == "history" && (
-            <div>
-              <History />
+              <TokenBids
+                cancelTokenBid={cancelTokenBid}
+                cancelTokenBidBatch={cancelTokenBidBatch}
+                cancelTokenBidItemsBatch={cancelTokenBidItemsBatch}
+                setCancelTokenBidItemsBatch={setCancelTokenBidItemsBatch}
+                tokenBids={tokenBids}
+              />
             </div>
           )}
         </div>
@@ -498,7 +607,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
             animate={{ translateY: 0 }}
             exit={{ translateY: "-100%" }}
             transition={{ duration: 0.3 }}
-            className=" absolute h-full overflow-auto   w-full   left-0 top-0  z-10"
+            className=" absolute h-full overflow-auto card  w-full   left-0 top-0  z-10"
           >
             <div className="px-4 flex justify-between w-full card  relative text-2xl">
               <div className="flex justify-between py-4">

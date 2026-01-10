@@ -7,26 +7,23 @@ import ListedNFTS from "@/components/ListedNFTS"
 import ListNftWithApproval from "@/components/ListNFT"
 import { FaUser } from "react-icons/fa"
 import { FaShop, FaGavel } from "react-icons/fa6"
-import { useBidCollection } from "@/components/Contract"
-import { IoClose } from "react-icons/io5"
-import { parseEther } from "viem"
 import { useMarketplace } from "@/app/context/MarketplaceContext"
 import CollectionBids from "@/components/CollectionBids"
+import { ListedNft } from "@/lib/constants"
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const [pageCard, setPageCard] = useState("marketplace")
-
+  const [userListings, setUserListings] = useState<ListedNft[]>([])
   const { address } = useAccount()
 
   const { info, bidsIndex, listingsIndex, collections } = useMarketplace()
-  let userListings: any[] = []
 
   useEffect(() => {
     setMounted(true)
   }, [])
-  userListings = useMemo(() => {
-    if (listingsIndex) return listingsIndex.filter((l: any) => l.seller.toLowerCase() === address?.toLowerCase())
+  useMemo(() => {
+    setUserListings(listingsIndex ? listingsIndex.filter((l: any) => l.seller.toLowerCase() === address?.toLowerCase()) : [])
   }, [listingsIndex, address])
 
   return (

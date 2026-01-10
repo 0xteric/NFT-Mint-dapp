@@ -84,13 +84,13 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
         hash,
       })
 
-      updateTx(hash, { status: "success" })
+      updateTx(hash, { status: "success", label: "Listed!" })
       triggerListingsRefresh()
       setTimeout(() => {
         removeTx(hash)
       }, 3500)
     } catch (e) {
-      updateTx(hash, { status: "error" })
+      updateTx(hash, { status: "error", label: "Listing error!" })
       setTimeout(() => {
         removeTx(hash)
       }, 3500)
