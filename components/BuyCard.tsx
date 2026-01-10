@@ -46,9 +46,9 @@ export function BuyCard({ buyItemsBatch, collections, names, removeItemFromBatch
       animate={{ translateY: 0 }}
       exit={{ translateY: "-100%" }}
       transition={{ duration: 0.3 }}
-      className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
+      className=" absolute h-full w-full card left-0 top-0 overflow-y-scroll "
     >
-      <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
+      <div className="p-4 flex justify-between overflow-y-visible relative text-2xl ">
         <div className="flex items-center gap-3">
           <FaGavel className="text-3xl" />
           <span className="font-bold">Buy items</span>
@@ -101,7 +101,7 @@ export function BuyCard({ buyItemsBatch, collections, names, removeItemFromBatch
             <FaEthereum />
           </div>
         </div>
-        <div className="flex justify-end p-4">
+        <div className="flex justify-end p-4 border-b border-(--accent)/50 ">
           <button onClick={handleBuy} disabled={!buyItemsBatch.length} className="rounded flex items-center py-2 px-6 gap-3">
             <span>BUY</span>
             <span>{buyItemsBatch.length}</span>

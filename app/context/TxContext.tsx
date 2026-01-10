@@ -40,7 +40,7 @@ export function TxProvider({ children }: { children: React.ReactNode }) {
     <TxContext.Provider value={{ txs, addTx, updateTx, removeTx }}>
       {children}
       {txs.length >= 0 && (
-        <div className="fixed flex flex-col gap-2 right-3 bottom-5">
+        <div className="fixed flex flex-col gap-2 right-3 bottom-5 z-50">
           {txs.map((tx: TxItem) => {
             return (
               <div key={tx.hash} className="rounded border border-(--accent)/30 card overflow-hidden">
@@ -50,7 +50,7 @@ export function TxProvider({ children }: { children: React.ReactNode }) {
                     <FaTimes />
                   </button>
                 </div>
-                <div className="flex items-center gap-3  bg-(--accent)/30 p-2">
+                <div className="flex items-center gap-3  bg-(--accent)/30 p-2 px-4">
                   {tx.status === "loading" && (
                     <svg className=" w-4 h-4 lg:w-6 lg:h-6 animate-spin text-white" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="20" strokeLinecap="round" />

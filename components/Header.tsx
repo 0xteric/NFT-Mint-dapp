@@ -34,14 +34,14 @@ export default function Header() {
       <div className=" block lg:hidden  py-2 px-4  w-full items-center">
         <h1 className="text-xl font-bold justify-center flex flex-1 p-1.25">SUP!</h1>
 
-        <div className="fixed left-0 top-0 flex flex-col items-start z-500 w-full">
+        <div className="fixed left-0 top-0 flex flex-col items-start z-500 w-fit">
           {menuCard && <div id="menu-bg" onClick={closeMenuCard} className="absolute w-screen h-screen bg-[#0000007a] z-55"></div>}
           <div className="p-2 mb-2">
-            <button onClick={switchMenuCard} className=" bg-transparent!">
+            <button onClick={switchMenuCard} className=" bg-transparent! relative z-70">
               <div
                 className={
-                  "flex flex-col justify-center items-center gap-1.5 p-2 transition-all duration-300 " +
-                  (menuCard ? "rotate-90  aspect-square bg-(--accent) rounded border border-(--bg-secondary)" : " ")
+                  "flex flex-col justify-center items-center gap-1.5 p-2 transition-all duration-300  " +
+                  (menuCard ? "rotate-90  aspect-square bg-(--accent) rounded border border-(--bg-secondary)" : " border-none bg-transparent rounded ")
                 }
               >
                 <div className={"  transition-all duration-300 px-3.5 py-0.5  " + (menuCard ? " translate-y-2.5 rotate-45 bg-[white] " : "bg-(--text) ")}></div>
@@ -52,7 +52,7 @@ export default function Header() {
           </div>
           <AnimatePresence>
             {menuCard && (
-              <motion.div initial={{ opacity: 0, x: -100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.2 }} className="z-60 w-full">
+              <motion.div initial={{ opacity: 0, x: -100 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -100 }} transition={{ duration: 0.2 }} className="z-60 w-screen">
                 <div className="px-2 -mt-4 w-full">
                   <div className="card rounded border border-(--bg) mt-2 transition-all duration-300 w-full">
                     <nav className="flex gap-4 flex-col text-sm p-2 text-center ">

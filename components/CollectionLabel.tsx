@@ -13,14 +13,16 @@ export function CollectionLabel({ collection }: { collection: any }) {
   return (
     <div className="flex flex-col justify-end w-full h-full">
       <div className="flex justify-between  rounded py-2 px-4 gap-1 w-full">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-1 text-left items-center gap-2">
           <span className="font-bold text-xs">{name}</span>
         </div>
-        <div>{floor.length ? <span>{Number(floor[0].price) / 1e18}</span> : <span>-</span>}</div>
-        <div className="flex gap-1 font-bold opacity-75">
-          <span>{listed.length ? listed.length : "-"}</span>
-          <span>/</span>
-          <span>{collection.colItems.length}</span>
+        <div className="flex-1 text-center">{floor.length ? <span>{Number(floor[0].price) / 1e18}</span> : <span>-</span>}</div>
+        <div className="flex flex-1 justify-end gap-1 font-bold opacity-75">
+          <div className="flex items-center">
+            <span>{listed.length ? listed.length : "-"}</span>
+            <span>/</span>
+            <span>{collection.colItems.length}</span>
+          </div>
         </div>
       </div>
     </div>

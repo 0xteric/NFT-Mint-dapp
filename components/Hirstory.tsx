@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { FaEthereum, FaExternalLinkAlt } from "react-icons/fa"
+import { FaEthereum, FaExternalLinkAlt, FaInbox } from "react-icons/fa"
 import { useMarketplace } from "@/app/context/MarketplaceContext"
 import { useAccount, useReadContracts } from "wagmi"
 import { Address, erc721Abi } from "viem"
@@ -57,8 +57,8 @@ export default function History() {
   }
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="w-full border-collapse text-left">
+    <div className="w-full  flex flex-col">
+      <div className="w-full card border-collapse text-left">
         <div className="border-b border-(--accent)/60 flex justify-between px-4">
           <span className="p-2 flex-3">Asset</span>
           <span className="p-2 flex-2">Action</span>
@@ -70,7 +70,7 @@ export default function History() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto card border-b border-(--accent)/50">
         <div className=" flex flex-col">
           {actions.map((a: any, index: number) => {
             const name = getNFTName(a.collection)
@@ -130,9 +130,16 @@ export default function History() {
               </div>
             )
           })}
+          {!actions.length && (
+            <div>
+              <div className=" flex flex-col items-center justify-center gap-2 p-4">
+                <FaInbox className="text-3xl" />
+                <p>No actions found </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-      <div className="p-4 w-full">footer</div>
     </div>
   )
 }

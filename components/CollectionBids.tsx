@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react"
-import { FaEthereum } from "react-icons/fa"
+import { FaEthereum, FaInbox } from "react-icons/fa"
+import { useAccount } from "wagmi"
 
 export default function CollectionBids({ collectionBids }: any) {
   const [totalSize, setTotalSize] = useState<number>(0)
   const [sorted, setSorted] = useState<any[]>([])
-
+  const { address } = useAccount()
   useEffect(() => {
     if (collectionBids) {
+      let userBids = collectionBids.filter((bid: any) => String(bid.bidder).toLowerCase() == String(address).toLowerCase())
       setTotalSize(
-        collectionBids.reduce((size: number, bid: any) => {
+        userBids.reduce((size: number, bid: any) => {
           return size + Number(bid.quantity)
         }, 0)
       )
-      setSorted(collectionBids.sort((a: any, b: any) => Number(b.price) - Number(a.price)))
+      setSorted(userBids.sort((a: any, b: any) => Number(b.price) - Number(a.price)))
     }
   }, [collectionBids.length])
 
@@ -47,6 +49,12 @@ export default function CollectionBids({ collectionBids }: any) {
               </div>
             )
           })}
+          {!sorted.length && (
+            <div className=" flex flex-col items-center justify-center gap-2 p-4">
+              <FaInbox className="text-3xl" />
+              <p>No collection bids found </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

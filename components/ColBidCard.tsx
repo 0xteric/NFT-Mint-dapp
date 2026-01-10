@@ -52,7 +52,7 @@ export function ColBidCard({ floor = 0, collectionSelected, setColBidCard }: any
       animate={{ translateY: 0 }}
       exit={{ translateY: "-100%" }}
       transition={{ duration: 0.3 }}
-      className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
+      className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll border-b border-(--accent)/50"
     >
       <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
         <div className="flex items-center gap-3">

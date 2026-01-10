@@ -68,7 +68,7 @@ export function BidCard({ bidItemsBatch = [], collections, names, removeItemFrom
       animate={{ translateY: 0 }}
       exit={{ translateY: "-100%" }}
       transition={{ duration: 0.3 }}
-      className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
+      className=" absolute h-full w-full card left-0 top-0 overflow-y-scroll  "
     >
       <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
         <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export function BidCard({ bidItemsBatch = [], collections, names, removeItemFrom
         </button>
       </div>
       <div className="flex flex-col w-full ">
-        <div className="flex w-full justify-end  p-4">
+        <div className="flex w-full justify-end  px-4">
           <div className=" flex gap-2 items-center">
             <span>Set All to: </span>
             <input
@@ -153,7 +153,7 @@ export function BidCard({ bidItemsBatch = [], collections, names, removeItemFrom
             <FaEthereum />
           </div>
         </div>
-        <div className="flex justify-end p-4">
+        <div className="flex justify-end p-4 border-b border-(--accent)/50">
           <button onClick={handleBid} disabled={!bidItemsBatch.length} className="rounded flex items-center py-2 px-6 gap-3">
             <span>BID</span>
             <span>{bidItemsBatch.length}</span>

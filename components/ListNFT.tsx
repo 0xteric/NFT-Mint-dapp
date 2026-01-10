@@ -21,6 +21,7 @@ import { MdOutlineLocalOffer } from "react-icons/md"
 import CollectionBids from "./CollectionBids"
 import TokenBids from "./TokenBids"
 import History from "./Hirstory"
+import { IoIosArrowForward } from "react-icons/io"
 
 export default function ListNftWithApproval({ userListings = [], collections = [], listings, collectionBids, tokenBids }: ListedNFTSProps) {
   const [status, setStatus] = useState<"idle" | "waiting" | "loading" | "success" | "error">("loading")
@@ -34,7 +35,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
   const [approveColsBatch, setApproveColsBatch] = useState<Address[]>([])
   const [sortBy, setSortBy] = useState<SortBy>("price")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
-
+  const [showColsCard, setShowColsCard] = useState<boolean>(false)
   const { addTx, updateTx, removeTx } = useTx()
   const { address }: any = useAccount()
   const { writeContractAsync } = useWriteContract()
@@ -213,106 +214,128 @@ export default function ListNftWithApproval({ userListings = [], collections = [
 
   return (
     <div className=" flex flex-col gap-2 w-full relative">
-      {!address && (
-        <div className="w-full flex justify-center">
-          <div className="w-50">
-            <ConnectWallet textMsg="CONNECT WALLET" />
-          </div>
-        </div>
-      )}
-      <div className="flex gap-4 w-full">
-        <div className="flex flex-col border-r border-(--accent)/30 p-4">
-          <div className="flex gap-2 items-center">
-            <h2 className="text-xl font-bold">
-              {address?.slice(0, 5)}...{address?.slice(-5)}
-            </h2>
-            <button onClick={() => copyToClipboard(address)} className="bg-transparent! hover:opacity-75!">
-              <FiCopy className=" text-xl" />
-            </button>
-            <a href={`https://sepolia.etherscan.io/address/${address}`} target="_blank">
-              <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
-            </a>
-          </div>
-          <div className="flex gap-4 mt-2 border-b border-(--accent)/30">
-            <button
-              onClick={() => setBidsOrItems("items")}
-              className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
-            >
-              <HiOutlineCollection />
-              <span>Owned </span>
-            </button>
-            <button
-              onClick={() => setBidsOrItems("bids")}
-              className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
-            >
-              <HiOutlineCollection />
-              <span>Biddded </span>
-            </button>
-          </div>
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 py-2">
-              <label className="flex items-center gap-3 card p-2 rounded-xl w-full border-(--accent)/50 border">
-                <FaSearch className="opacity-50" />
-                <input type="text" className="bg-transparent!" placeholder="Search collection" />
-              </label>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between px-4">
-                <span>Name</span>
-                <span>Floor</span>
-                <span>Listed</span>
+      <div className="flex lg:gap-4  w-full relative">
+        <div
+          className={
+            "flex flex-1 flex-row w-full lg:w-fit  lg:relative absolute transition-all duration-200 lg:translate-y-0 -translate-y-full lg:scale-y-100  z-10 " +
+            (showColsCard ? " scale-y-100 translate-y-0 " : " scale-y-0 ")
+          }
+        >
+          <div className=" bg-(--bg-secondary) w-full lg:rounded-none! overflow-hidden   border-(--accent)/50 lg:border-r    ">
+            <div className="flex flex-col lg:bg-(--accent)/20 h-full   ">
+              <div className="flex items-center justify-between">
+                <div className="flex gap-2 items-center  px-4 pt-4">
+                  <h2 className="text-xl font-bold">
+                    {address?.slice(0, 5)}...{address?.slice(-5)}
+                  </h2>
+                  <button onClick={() => copyToClipboard(address)} className="bg-transparent!  hover:opacity-75!">
+                    <FiCopy className=" text-xl" />
+                  </button>
+                  <a href={`https://sepolia.etherscan.io/address/${address}`} target="_blank">
+                    <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
+                  </a>
+                </div>
+                <button onClick={() => setShowColsCard(false)} className="bg-transparent! lg:hidden text-(--text-secondary)! p-4">
+                  <FaTimes />
+                </button>
               </div>
-              <div>
-                <div className="flex flex-col justify-end w-full h-full">
-                  <div
-                    onClick={() => setCollectionSelected("")}
-                    className={
-                      "card hover:cursor-pointer rounded border border-(--accent)/50 flex justify-between px-4 py-2 " + (collectionSelected == "" ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")
-                    }
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs">All collections</span>
-                    </div>
-                    <div className="flex gap-1 font-bold opacity-75">
-                      <span>{userListings.length ? userListings.length : "-"}</span>
-                      <span>/</span>
-                      <span>{items.length}</span>
+
+              <div className="flex gap-4 mt-2 border-b border-(--accent)/30  px-4">
+                <button
+                  onClick={() => setBidsOrItems("items")}
+                  className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "items" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+                >
+                  <HiOutlineCollection />
+                  <span>Owned </span>
+                </button>
+                <button
+                  onClick={() => setBidsOrItems("bids")}
+                  className={"flex grow items-center gap-2 bg-transparent! p-2 " + (bidsOrItems == "bids" ? " text-(--accent)! border-b" : "text-(--text)/80!")}
+                >
+                  <HiOutlineCollection />
+                  <span>Biddded </span>
+                </button>
+              </div>
+              <div className="flex flex-col gap-3 px-4 ">
+                <div className="flex items-center gap-2 pt-2">
+                  <label className="flex items-center gap-3 card p-2 rounded-xl w-full border-(--accent)/50 border">
+                    <FaSearch className="opacity-50" />
+                    <input type="text" className="bg-transparent!" placeholder="Search collection" />
+                  </label>
+                </div>
+                <div className="flex flex-col gap-2 pb-4">
+                  <div className="flex  px-4">
+                    <span className="flex-1 text-left">Name</span>
+                    <span className="flex-1 text-center">Floor</span>
+                    <span className="flex-1 text-right">Listed</span>
+                  </div>
+                  <div>
+                    <div className="flex flex-col justify-end w-full h-full">
+                      <div
+                        onClick={() => setCollectionSelected("")}
+                        className={
+                          "card hover:cursor-pointer rounded border border-(--accent)/50 flex justify-between px-4 py-2 " +
+                          (collectionSelected == "" ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")
+                        }
+                      >
+                        <div className="flex flex-1 text-left items-center gap-2">
+                          <span className="font-bold text-xs">All collections</span>
+                        </div>
+                        <div className="flex-1 text-center"></div>
+                        <div className="flex flex-1 justify-end items-center gap-1 font-bold opacity-75">
+                          <div>
+                            <span>{userListings.length ? userListings.length : "-"}</span>
+                            <span>/</span>
+                            <span>{items.length}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  {collections.map((col: any) => {
+                    const colItems = items.filter((item) => String(item.collection).toLowerCase() == String(col.collection).toLowerCase())
+                    const colListings = listings.filter((l) => l.collection == col.collection)
+                    return (
+                      <div
+                        key={col.collection}
+                        className={"card rounded border hover:cursor-pointer border-(--accent)/50" + (collectionSelected == col.collection ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")}
+                        onClick={() => setCollectionSelected(col.collection)}
+                      >
+                        <CollectionLabel key={col.collection} collection={{ collection: col.collection, colItems: colItems, colListings: colListings }} />
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
-              {collections.map((col: any) => {
-                const colItems = items.filter((item) => String(item.collection).toLowerCase() == String(col.collection).toLowerCase())
-                const colListings = listings.filter((l) => l.collection == col.collection)
-                return (
-                  <div
-                    key={col.collection}
-                    className={"card rounded border hover:cursor-pointer border-(--accent)/50" + (collectionSelected == col.collection ? " bg-(--accent)/80! text-(--bg-secondary)!" : " ")}
-                    onClick={() => setCollectionSelected(col.collection)}
-                  >
-                    <CollectionLabel key={col.collection} collection={{ collection: col.collection, colItems: colItems, colListings: colListings }} />
-                  </div>
-                )
-              })}
             </div>
           </div>
         </div>
-        <div className="flex flex-col py-3 pr-4 grow">
+
+        <div className="flex flex-2 flex-col py-3 lg:pr-4 p-4 ">
           <div className="w-full flex items-center gap-2 text-start text-2xl font-bold justify-between mb-2">
-            <h2>{collectionSelected.length > 0 ? colName : "All collections"}</h2>
-            {collectionSelected.length > 0 && (
-              <div className=" flex gap-2 items-center">
-                <button onClick={() => copyToClipboard(collectionSelected)} className="bg-transparent! hover:opacity-75!">
-                  <FiCopy className=" text-xl" />
-                </button>
-                <a href={`https://sepolia.etherscan.io/token/${collectionSelected}`} target="_blank">
-                  <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
-                </a>
-              </div>
-            )}
-            <button onClick={() => setHistoryPage(true)} className={"flex bg-transparent! text-(--text-secondary)! items-center gap-2 rounded p-2 "}>
-              <FaHistory />
-            </button>
+            <div className="flex gap-4 items-center">
+              <h2>{collectionSelected.length > 0 ? colName : "All collections"}</h2>
+
+              {collectionSelected.length > 0 && (
+                <div className=" flex gap-2 items-center">
+                  <button onClick={() => copyToClipboard(collectionSelected)} className="bg-transparent! hover:opacity-75!">
+                    <FiCopy className=" text-xl" />
+                  </button>
+                  <a href={`https://sepolia.etherscan.io/token/${collectionSelected}`} target="_blank">
+                    <FaExternalLinkAlt className="hover:opacity-75 hover:cursor-pointer text-[17px]" />
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 items-center">
+              <button onClick={() => setShowColsCard(!showColsCard)} className=" lg:hidden text-(--secondary)! bg-transparent!">
+                <HiOutlineCollection className="" />
+              </button>
+              <button onClick={() => setHistoryPage(true)} className={"flex bg-transparent! text-(--text-secondary)! items-center gap-2 rounded p-2 "}>
+                <FaHistory />
+              </button>
+            </div>
           </div>
           <div className=" w-full flex gap-2 border-b border-(--accent)/30 mb-2">
             <button
@@ -364,14 +387,21 @@ export default function ListNftWithApproval({ userListings = [], collections = [
                   </button>
                 )}
               </div>
-              {items.length == 0 && !isLoading && (
+              {items.length == 0 && !isLoading && !address && (
+                <div className="w-full flex items-center h-full justify-center">
+                  <div>
+                    <ConnectWallet textMsg="CONNECT WALLET" />
+                  </div>
+                </div>
+              )}
+              {items.length == 0 && !isLoading && address && (
                 <div className=" flex flex-col items-center justify-center gap-2 p-4">
                   <FaInbox className="text-3xl" />
                   <p>You have no tiems </p>
                 </div>
               )}
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 ">
-                {status == "loading" && (
+                {status == "loading" && items.length == 0 && isLoading && (
                   <div className="w-full relative flex justify-center  aspect-9/12  px-4  animate-pulse">
                     <div className="absolute w-full h-full bg-(--accent) opacity-50 rounded"></div>
                   </div>
@@ -441,19 +471,21 @@ export default function ListNftWithApproval({ userListings = [], collections = [
             animate={{ translateY: 0 }}
             exit={{ translateY: "-100%" }}
             transition={{ duration: 0.3 }}
-            className=" absolute h-fit w-full card left-0 top-0 overflow-y-scroll "
+            className=" absolute card  h-full overflow-y-scroll  w-full   left-0 top-0 z-10  "
           >
-            <div className="p-4 flex justify-between overflow-y-visible relative text-2xl">
-              <div className="flex items-center gap-3">
-                <MdOutlineLocalOffer className="text-3xl" />
-                <span className="font-bold">List items</span>
+            <div className="flex flex-col  w-full ">
+              <div className="p-4 flex w-full justify-between card  text-2xl">
+                <div className="flex items-center gap-3">
+                  <MdOutlineLocalOffer className="text-3xl" />
+                  <span className="font-bold">List items</span>
+                </div>
+                <button onClick={closeListCard} className="bg-transparent!">
+                  <FaTimes className="opacity-75" />
+                </button>
               </div>
-              <button onClick={closeListCard} className="bg-transparent!">
-                <FaTimes className="opacity-75" />
-              </button>
-            </div>
-            <div className="flex w-full ">
-              <ListCard items={listItemsBatch} collections={collections} listings={listings} />
+              <div className="flex w-full  border-b border-(--accent)/50 card ">
+                <ListCard items={listItemsBatch} collections={collections} listings={listings} />
+              </div>
             </div>
           </motion.div>
         )}
@@ -466,9 +498,9 @@ export default function ListNftWithApproval({ userListings = [], collections = [
             animate={{ translateY: 0 }}
             exit={{ translateY: "-100%" }}
             transition={{ duration: 0.3 }}
-            className=" absolute h-fit w-full card  left-0 top-0  z-10"
+            className=" absolute h-full overflow-auto   w-full   left-0 top-0  z-10"
           >
-            <div className="px-4 flex justify-between w-full  relative text-2xl">
+            <div className="px-4 flex justify-between w-full card  relative text-2xl">
               <div className="flex justify-between py-4">
                 <div className="flex text-xl items-center gap-3">
                   <FiActivity />

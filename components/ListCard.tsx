@@ -132,8 +132,8 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
   }
 
   return (
-    <div className="w-full flex flex-col ">
-      <div className="flex w-full justify-end  p-4">
+    <div className="w-full  flex flex-col    ">
+      <div className="flex w-full justify-end  px-4">
         <div className=" flex gap-2 items-center">
           <span>Set All to: </span>
           <input
@@ -161,7 +161,7 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
         </div>
         <div className=" flex flex-[0.2] gap-2 items-center"></div>
       </div>
-      <div className="  h-full  overflow-y-scroll flex flex-col">
+      <div className="  flex flex-col  w-full   ">
         {listItems.map((i, index) => {
           const floor = getFloor(i.collection)
           const name: any = !isLoading && names?.length ? names[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
@@ -169,7 +169,7 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
             !isLoadingCore && colsData?.length ? colsData[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
           prices.push(Number(i.price) / 1e18)
           return (
-            <div className="flex items-center px-6 justify-between p-2 border-b border-(--accent)/30" key={index}>
+            <div className="flex items-center px-6 justify-between w-full p-2 border-b border-(--accent)/30" key={index}>
               <div className="flex flex-2 items-center gap-3">
                 <RiNftFill className="text-xl" />
                 <div className="flex flex-col items-start">
@@ -181,7 +181,7 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
               <div className="flex gap-2 items-center flex-1">
                 <div className="flex gap-1 items-center max-w-auto">
                   <span>
-                    {Number(colData[2]) * Number(i.price)
+                    {Number(colData ? colData[2] : "0") * Number(i.price)
                       ? String((Number(colData[2]) * Number(i.price)) / 1e18 / 10000).length > 6
                         ? ((Number(colData[2]) * Number(i.price)) / 1e18 / 10000).toFixed(4)
                         : (Number(colData[2]) * Number(i.price)) / 1e18 / 10000
@@ -211,7 +211,7 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
         })}
       </div>
 
-      <div className="w-full p-4">
+      <div className="w-full  flex flex-col p-4">
         <div className="flex justify-between">
           <div className="flex flex-col">
             <div className="flex items-center gap-4">
