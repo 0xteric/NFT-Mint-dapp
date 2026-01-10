@@ -15,11 +15,11 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
   const [totalEstimated, setTotalEstimated] = useState<number>(0)
   const [totalRoyalties, setTotalRoyalties] = useState<number>(0)
   const [totalMarketplaceFee, setTotalMarketplaceFee] = useState<number>(0)
+  const [prices, setPrices] = useState<bigint[]>([])
   const { info, triggerListingsRefresh } = useMarketplace()
   const { list, publicClient } = useList()
   const { listBatch } = useListBatch()
   const { addTx, removeTx, updateTx } = useTx()
-  let prices = []
 
   const { data: names, isLoading = true } = useReadContracts({
     contracts: collections.map((col) => ({
@@ -31,13 +31,12 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
       enabled: Boolean(collections.length),
     },
   })
-
   const { data: colsData, isLoading: isLoadingCore = true } = useReadContracts({
     contracts: collections.map((col) => ({
-      address: CORE_CONTRACT_ADDRESS,
+      address: CORE_CONTRACT_ADDRESS as `0x${string}`,
       abi: MarketplaceCoreABI,
       functionName: "collections",
-      args: [col.collection],
+      args: [col.collection as `0x${string}`],
     })),
     query: {
       enabled: Boolean(collections.length),
@@ -67,11 +66,11 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
 
   const handleList = async () => {
     if (!items.length || listItems.some((i) => !i.price)) return
-    let hash: Address
+    let hash: any
     try {
       const collections = listItems.map((i) => i.collection)
       const tokenIds = listItems.map((i) => i.tokenId)
-      const prices = listItems.map((i) => i.price)
+      const prices = listItems.map((i) => (i.price ? i.price : BigInt(0)))
       if (listItems.length > 1) {
         hash = await listBatch(collections, tokenIds, prices)
         addTx({ hash, status: "loading", label: "Listing batch" })
@@ -167,7 +166,7 @@ export function ListCard({ items, collections, listings }: { items: UserNft[]; c
           const name: any = !isLoading && names?.length ? names[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
           const colData: any =
             !isLoadingCore && colsData?.length ? colsData[collections.findIndex((col: any) => String(col.collection).toLowerCase() == String(i.collection).toLowerCase())].result : "-"
-          prices.push(Number(i.price) / 1e18)
+          setPrices((prev) => [...prev, i.price ? i.price : BigInt(0)])
           return (
             <div className="flex items-center px-6 justify-between w-full p-2 border-b border-(--accent)/30" key={index}>
               <div className="flex flex-2 items-center gap-3">

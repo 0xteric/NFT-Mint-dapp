@@ -114,7 +114,7 @@ export function BidCard({ bidItemsBatch = [], collections, names, removeItemFrom
                 <RiNftFill className="text-2xl" />
                 <div className="flex  flex-col items-start">
                   <span>#{l.tokenId}</span>
-                  <span>{names ? names[collections.findIndex((col) => String(col.collection).toLowerCase() == collectionSelected.toLowerCase())]?.result : "-"}</span>
+                  <span>{names ? names[collections.findIndex((col: any) => String(col.collection).toLowerCase() == collectionSelected.toLowerCase())]?.result : "-"}</span>
                 </div>
               </div>
 

@@ -47,9 +47,9 @@ export default function ListedNFTS({ listings, collections = [], collectionBids 
     },
   })
 
-  const { data: colsData, isLoading: isLoadingCore = true } = useReadContracts({
+  const { data: colsData } = useReadContracts({
     contracts: collections.map((col: any) => ({
-      address: CORE_CONTRACT_ADDRESS,
+      address: CORE_CONTRACT_ADDRESS as `0x${string}`,
       abi: MarketplaceCoreABI,
       functionName: "collections",
       args: [col.collection],
@@ -87,8 +87,8 @@ export default function ListedNFTS({ listings, collections = [], collectionBids 
   }
 
   const getColData = (col: string = collectionSelected) => {
-    if (!colsData) return
-    return colsData?.find((c) => String(c.result[0]).toLowerCase() == col.toLowerCase())?.result
+    if (!colsData) return []
+    return Array(colsData?.find((c: any) => String(c.result[0]).toLowerCase() == col.toLowerCase())?.result)
   }
 
   const addItemToBatch = (item: ListedNft, dir: string) => {
@@ -189,7 +189,7 @@ export default function ListedNFTS({ listings, collections = [], collectionBids 
             </div>
             <div className="card py-2 px-4 rounded-xl border border-(--accent)/30 flex flex-col">
               <span className="font-bold text-xs opacity-75">TOTAL SALES</span>
-              <span>{getColData() ? getColData()[4] : "-"}</span>
+              <span>{getColData() ? Number(getColData()[4]) : "-"}</span>
             </div>
           </div>
         </div>
