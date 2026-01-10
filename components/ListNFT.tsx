@@ -562,6 +562,7 @@ export default function ListNftWithApproval({ userListings = [], collections = [
           {collectionView == "tokenBids" && (
             <div>
               <TokenBids
+                collectionSelected={collectionSelected}
                 cancelTokenBid={cancelTokenBid}
                 cancelTokenBidBatch={cancelTokenBidBatch}
                 cancelTokenBidItemsBatch={cancelTokenBidItemsBatch}

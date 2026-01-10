@@ -7,7 +7,7 @@ import { RiNftFill } from "react-icons/ri"
 export default function History() {
   const [actions, setActions] = useState<any[]>([])
   const { address } = useAccount()
-  const { listingEvents, collectionBidEvents, tokenBidEvents, collections } = useMarketplace()
+  const { listingEvents, collectionBidEvents, tokenBidEvents, collections = [] } = useMarketplace()
 
   const { data: names }: any = useReadContracts({
     contracts: collections.map((col: any) => ({
@@ -22,7 +22,6 @@ export default function History() {
 
   useEffect(() => {
     if (!listingEvents || !collectionBidEvents || !tokenBidEvents) return
-    console.log(listingEvents, collectionBidEvents, tokenBidEvents)
     setActions(
       listingEvents
         .filter((l: any) => String(l.seller).toLowerCase() == String(address).toLowerCase())
@@ -72,7 +71,7 @@ export default function History() {
 
       <div className="flex-1 overflow-y-auto card border-b border-(--accent)/50">
         <div className=" flex flex-col">
-          {actions &&
+          {actions.length &&
             actions.map((a: any, index: number) => {
               const name = getNFTName(a.collection)
               const time = formatDate(a.createdAt)

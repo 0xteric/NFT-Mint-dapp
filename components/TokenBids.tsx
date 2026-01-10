@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react"
 import { FaEthereum, FaInbox } from "react-icons/fa"
 import { useTx } from "@/app/context/TxContext"
-import { usePublicClient } from "wagmi"
+import { useAccount, usePublicClient } from "wagmi"
 
-export default function TokenBids({ tokenBids, cancelTokenBidItemsBatch, setCancelTokenBidItemsBatch, cancelTokenBid, cancelTokenBidBatch }: any) {
+export default function TokenBids({ collectionSelected, tokenBids, cancelTokenBidItemsBatch, setCancelTokenBidItemsBatch, cancelTokenBid, cancelTokenBidBatch }: any) {
   const [sortedBids, setSortedBids] = useState(tokenBids)
   const { addTx, removeTx, updateTx } = useTx()
   const publicClient = usePublicClient()
+  const { address } = useAccount()
 
   useEffect(() => {
-    if (tokenBids) {
-      setSortedBids(tokenBids.sort((a: any, b: any) => Number(b.price) - Number(a.price)))
+    if (tokenBids && address) {
+      setSortedBids(
+        tokenBids
+          .filter(
+            (b: any) => String(b.bidder).toLowerCase() == String(address).toLowerCase() && (collectionSelected ? String(b.collection).toLowerCase() == String(collectionSelected).toLowerCase() : true)
+          )
+          .sort((a: any, b: any) => Number(b.price) - Number(a.price))
+      )
     }
-  }, [tokenBids])
-
-  useEffect(() => {
-    console.log(cancelTokenBidItemsBatch)
-  }, [cancelTokenBidItemsBatch.length])
+  }, [tokenBids, address])
 
   const addItemToBatch = (i: any) => {
     setCancelTokenBidItemsBatch((prev: any) => [...prev, i])
@@ -59,6 +62,7 @@ export default function TokenBids({ tokenBids, cancelTokenBidItemsBatch, setCanc
       <div className="w-full flex flex-col border-collapse text-left card p-2 rounded ">
         <div className="w-full justify-end flex">
           <button
+            onClick={handleCancelBids}
             disabled={!cancelTokenBidItemsBatch.length}
             className={"p-2 px-4 rounded gap-2 flex items-center border! border-(--accent)! " + (!cancelTokenBidItemsBatch.length ? " bg-transparent! text-(--accent)!" : "")}
           >
@@ -78,6 +82,7 @@ export default function TokenBids({ tokenBids, cancelTokenBidItemsBatch, setCanc
               </div>
             </div>
             <span className="flex-1 border-l px-4 border-(--text-secondary)/30 p-2">Token id</span>
+            <span className="flex-[0.5] p-2"></span>
           </div>
         </div>
 
@@ -92,7 +97,7 @@ export default function TokenBids({ tokenBids, cancelTokenBidItemsBatch, setCanc
                   </div>
                 </span>
                 <div className="flex-1 p-2 relative z-10">#{c.tokenId}</div>
-                <div>
+                <div className="flex-[0.5] flex justify-end">
                   <button
                     onClick={() => {
                       if (isInBatch(c)) {

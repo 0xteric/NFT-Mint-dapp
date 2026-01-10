@@ -125,6 +125,7 @@ export async function indexMarketplaceBids(publicClient: any, fromBlock: bigint)
       switch (parsed.eventName) {
         case "TokenBidCreated": {
           const key = `${parsed.args.collection}-${parsed.args.tokenId}-${parsed.args.bidder}`
+          tokenBids.get(key) && tokenBids.delete(key)
           tokenBids.set(key, {
             collection: parsed.args.collection,
             tokenId: parsed.args.tokenId,
